@@ -10,34 +10,20 @@ class TodoRepositoryImpl implements TodoRepository {
 
   final Isar _isar;
 
-  /// Loads the [IsarLink] relation on [model] and converts it to a domain [Todo].
-  ///
-  /// This is the single place where the "load before map" contract is satisfied.
-  /// All read paths go through this helper so the mapper remains free of I/O.
-  Future<Todo> _loadAndMap(TodoModel model) async {
-    await model.category.load();
-    return model.toEntity();
-  }
-
   @override
   Stream<List<Todo>> watchAll() {
     return _isar.todoModels
         .where()
         .sortByCreatedAtDesc()
         .watch(fireImmediately: true)
-        // asyncMap is required here: unlike map(), it awaits the Future returned
-        // by _loadAndMap before emitting the next value, so the stream always
-        // carries fully-hydrated domain entities.
-        .asyncMap((models) => Future.wait(models.map(_loadAndMap)));
+        .map((models) => models.map((model) => model.toEntity()).toList());
   }
 
   @override
   Stream<Todo?> watchById(int id) {
     return _isar.todoModels
         .watchObject(id, fireImmediately: true)
-        .asyncMap(
-          (model) => model != null ? _loadAndMap(model) : Future.value(null),
-        );
+        .map((model) => model?.toEntity());
   }
 
   @override
@@ -46,8 +32,7 @@ class TodoRepositoryImpl implements TodoRepository {
         .where()
         .sortByCreatedAtDesc()
         .findAll();
-    // Load all links in parallel for efficiency.
-    return Future.wait(models.map(_loadAndMap));
+    return models.map((model) => model.toEntity()).toList();
   }
 
   @override
