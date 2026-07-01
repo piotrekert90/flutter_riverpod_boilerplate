@@ -1,17 +1,14 @@
 import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 import 'package:flutter_riverpod_boilerplate/app.dart';
-import 'package:flutter_riverpod_boilerplate/features/settings/domain/entities/user_preferences.dart';
-import 'package:flutter_riverpod_boilerplate/features/settings/domain/repositories/user_preferences_repository.dart';
-import 'package:flutter_riverpod_boilerplate/features/settings/presentation/providers/user_preferences_repository_provider.dart';
 import 'package:flutter_riverpod_boilerplate/features/todos/domain/entities/todo.dart';
 import 'package:flutter_riverpod_boilerplate/features/todos/domain/repositories/todo_repository.dart';
 import 'package:flutter_riverpod_boilerplate/features/todos/presentation/providers/todo_repository_provider.dart';
 
-// Używamy FakeTodoRepository, podobnie jak w widget testach, by wstrzyknąć stałe dane.
 class FakeTodoRepository implements TodoRepository {
   final List<Todo> _todos = [];
   final _streamController = StreamController<List<Todo>>.broadcast();
@@ -32,12 +29,6 @@ class FakeTodoRepository implements TodoRepository {
         .where((todo) => todo.id == id)
         .cast<Todo?>()
         .firstWhere((_) => true, orElse: () => null);
-    yield* _streamController.stream.map(
-      (todos) => todos
-          .where((todo) => todo.id == id)
-          .cast<Todo?>()
-          .firstWhere((_) => true, orElse: () => null),
-    );
   }
 
   @override
@@ -53,13 +44,7 @@ class FakeTodoRepository implements TodoRepository {
         id: _todos.length + 1,
         title: title,
         isCompleted: false,
-        createdAt: DateTime(
-          2025,
-          1,
-          1,
-          10,
-          0,
-        ), // Zamrożona data, aby Golden Test był deterministyczny
+        createdAt: DateTime(2025, 1, 1, 10),
       ),
     );
     _emit();
@@ -76,33 +61,11 @@ class FakeTodoRepository implements TodoRepository {
   }
 }
 
-class FakeUserPreferencesRepository implements UserPreferencesRepository {
-  final _preferences = UserPreferences.defaults();
-
-  @override
-  Stream<UserPreferences> watch() async* {
-    yield _preferences;
-  }
-
-  @override
-  Future<UserPreferences> get() async {
-    return _preferences;
-  }
-
-  @override
-  Future<void> updateThemeMode(UserThemeMode themeMode) async {}
-
-  @override
-  Future<void> updateNotificationsEnabled(bool isEnabled) async {}
-}
-
 void main() {
   late FakeTodoRepository repository;
-  late FakeUserPreferencesRepository userPreferencesRepository;
 
   setUp(() {
     repository = FakeTodoRepository();
-    userPreferencesRepository = FakeUserPreferencesRepository();
   });
 
   tearDown(() {
@@ -111,53 +74,38 @@ void main() {
 
   group('Todo Screen Golden Tests', () {
     testWidgets('Initial empty state', (tester) async {
-      // 1. Zamrożenie wymiarów ekranu (np. klasyczny profil telefonu, 1080x2400)
       tester.view.physicalSize = const Size(1080, 2400);
       tester.view.devicePixelRatio = 3.0;
+      addTearDown(tester.view.resetPhysicalSize);
+      addTearDown(tester.view.resetDevicePixelRatio);
 
-      // 2. Budowanie widgetu ze wstrzykniętym fake repo
       await tester.pumpWidget(
         ProviderScope(
-          overrides: [
-            todoRepositoryProvider.overrideWithValue(repository),
-            userPreferencesRepositoryProvider.overrideWithValue(
-              userPreferencesRepository,
-            ),
-          ],
+          overrides: [todoRepositoryProvider.overrideWithValue(repository)],
           child: const App(),
         ),
       );
 
-      // 3. Oczekiwanie na ustabilizowanie się klatek (wszystkie ładowania zakończone)
       await tester.pumpAndSettle();
 
-      // 4. Porównanie wyrenderowanego piksela do pliku referencyjnego
       await expectLater(
         find.byType(App),
         matchesGoldenFile('goldens/todo_screen_empty.png'),
       );
-
-      // Sprzątanie po teście
-      tester.view.resetPhysicalSize();
-      tester.view.resetDevicePixelRatio();
     });
 
     testWidgets('Populated list state', (tester) async {
       tester.view.physicalSize = const Size(1080, 2400);
       tester.view.devicePixelRatio = 3.0;
+      addTearDown(tester.view.resetPhysicalSize);
+      addTearDown(tester.view.resetDevicePixelRatio);
 
-      // Dodanie deterministycznego zadania
       await repository.add(title: 'Napisz dokumentację');
       await repository.add(title: 'Przetestuj aplikację');
 
       await tester.pumpWidget(
         ProviderScope(
-          overrides: [
-            todoRepositoryProvider.overrideWithValue(repository),
-            userPreferencesRepositoryProvider.overrideWithValue(
-              userPreferencesRepository,
-            ),
-          ],
+          overrides: [todoRepositoryProvider.overrideWithValue(repository)],
           child: const App(),
         ),
       );
@@ -168,9 +116,6 @@ void main() {
         find.byType(App),
         matchesGoldenFile('goldens/todo_screen_populated.png'),
       );
-
-      tester.view.resetPhysicalSize();
-      tester.view.resetDevicePixelRatio();
     });
   });
 }

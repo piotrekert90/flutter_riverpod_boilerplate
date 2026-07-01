@@ -5,9 +5,6 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 import 'package:flutter_riverpod_boilerplate/app.dart';
-import 'package:flutter_riverpod_boilerplate/features/settings/domain/entities/user_preferences.dart';
-import 'package:flutter_riverpod_boilerplate/features/settings/domain/repositories/user_preferences_repository.dart';
-import 'package:flutter_riverpod_boilerplate/features/settings/presentation/providers/user_preferences_repository_provider.dart';
 import 'package:flutter_riverpod_boilerplate/features/todos/domain/entities/todo.dart';
 import 'package:flutter_riverpod_boilerplate/features/todos/domain/repositories/todo_repository.dart';
 import 'package:flutter_riverpod_boilerplate/features/todos/presentation/providers/todo_repository_provider.dart';
@@ -60,55 +57,21 @@ class FakeTodoRepository implements TodoRepository {
   }
 
   @override
-  Future<void> toggleCompleted({required int id}) async {
-    final index = _todos.indexWhere((todo) => todo.id == id);
-    if (index == -1) {
-      return;
-    }
-
-    final todo = _todos[index];
-    _todos[index] = todo.copyWith(isCompleted: !todo.isCompleted);
-    _emit();
-  }
+  Future<void> toggleCompleted({required int id}) async {}
 
   @override
-  Future<void> delete({required int id}) async {
-    _todos.removeWhere((todo) => todo.id == id);
-    _emit();
-  }
+  Future<void> delete({required int id}) async {}
 
   void dispose() {
     _streamController.close();
   }
 }
 
-class FakeUserPreferencesRepository implements UserPreferencesRepository {
-  final _preferences = UserPreferences.defaults();
-
-  @override
-  Stream<UserPreferences> watch() async* {
-    yield _preferences;
-  }
-
-  @override
-  Future<UserPreferences> get() async {
-    return _preferences;
-  }
-
-  @override
-  Future<void> updateThemeMode(UserThemeMode themeMode) async {}
-
-  @override
-  Future<void> updateNotificationsEnabled(bool isEnabled) async {}
-}
-
 void main() {
   late FakeTodoRepository repository;
-  late FakeUserPreferencesRepository userPreferencesRepository;
 
   setUp(() {
     repository = FakeTodoRepository();
-    userPreferencesRepository = FakeUserPreferencesRepository();
   });
 
   tearDown(() {
@@ -118,12 +81,7 @@ void main() {
   testWidgets('Todo screen loads and allows adding a task', (tester) async {
     await tester.pumpWidget(
       ProviderScope(
-        overrides: [
-          todoRepositoryProvider.overrideWithValue(repository),
-          userPreferencesRepositoryProvider.overrideWithValue(
-            userPreferencesRepository,
-          ),
-        ],
+        overrides: [todoRepositoryProvider.overrideWithValue(repository)],
         child: const App(),
       ),
     );
