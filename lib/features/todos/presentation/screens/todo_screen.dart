@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import '../../../settings/presentation/screens/settings_screen.dart';
 import '../providers/todo_notifier.dart';
 import '../widgets/add_todo_fab.dart';
 import '../widgets/todo_list_item.dart';
@@ -14,20 +13,7 @@ class TodoScreen extends ConsumerWidget {
     final todosAsync = ref.watch(todoListProvider);
 
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('Zadania'),
-        actions: [
-          IconButton(
-            tooltip: 'Ustawienia',
-            icon: const Icon(Icons.settings_outlined),
-            onPressed: () {
-              Navigator.of(context).push(
-                MaterialPageRoute<void>(builder: (_) => const SettingsScreen()),
-              );
-            },
-          ),
-        ],
-      ),
+      appBar: AppBar(title: const Text('Zadania')),
       body: todosAsync.when(
         loading: () => const Center(child: CircularProgressIndicator()),
         error: (error, _) => Center(
