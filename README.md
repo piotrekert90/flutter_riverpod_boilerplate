@@ -9,6 +9,7 @@ This application serves as a full-fledged testing ground for the implemented pat
 - **Relations (1:1 / N:1)**: Each task can have an associated *Category*.
 - **Todo List**: A reactive list with checkboxes and Swipe-to-delete functionality.
 - **Todo Detail Screen**: A standalone, independent view that subscribes to a specific resource by ID, protecting the application against memory leaks by leveraging Riverpod's `family` and `autoDispose`.
+- **Settings Module**: Implementation of a global configuration layer (`ThemeMode`) backed by an Isar database singleton collection (`id=0`), reactively bound to the root `MaterialApp`.
 - **Testability**: A comprehensive suite of unit tests (Notifiers) and UI tests (Widget Tests).
 - **Visual Regression (Screenshot Testing)**: Implementation of Golden Tests to ensure pixel-perfect stability across the app UI.
 
@@ -34,18 +35,22 @@ lib/
 ├── core/
 │   └── providers/               # Global providers (e.g., isar_provider.dart)
 └── features/
-    └── todos/
-        ├── domain/              # 1. DOMAIN LAYER (Independent)
-        │   ├── entities/        # -> todo.dart, category.dart
-        │   └── repositories/    # -> todo_repository.dart (interface)
-        ├── data/                # 2. DATA LAYER (Dependent on external APIs/DBs)
-        │   ├── models/          # -> todo_model.dart, category_model.dart (Isar)
-        │   ├── mappers/         # -> todo_mapper.dart, category_mapper.dart
-        │   └── repositories/    # -> todo_repository_impl.dart (Implementation)
-        └── presentation/        # 3. PRESENTATION LAYER (UI + State Management)
-            ├── providers/       # -> todo_notifier.dart, todo_detail_notifier.dart
-            ├── screens/         # -> todo_screen.dart, todo_screen_detail.dart
-            └── widgets/         # -> todo_list_item.dart, add_todo_fab.dart
+    ├── todos/
+    │   ├── domain/              # 1. DOMAIN LAYER (Independent)
+    │   │   ├── entities/        # -> todo.dart, category.dart
+    │   │   └── repositories/    # -> todo_repository.dart (interface)
+    │   ├── data/                # 2. DATA LAYER (Dependent on external APIs/DBs)
+    │   │   ├── models/          # -> todo_model.dart, category_model.dart (Isar)
+    │   │   ├── mappers/         # -> todo_mapper.dart, category_mapper.dart
+    │   │   └── repositories/    # -> todo_repository_impl.dart (Implementation)
+    │   └── presentation/        # 3. PRESENTATION LAYER (UI + State Management)
+    │       ├── providers/       # -> todo_notifier.dart, todo_detail_notifier.dart
+    │       ├── screens/         # -> todo_screen.dart, todo_screen_detail.dart
+    │       └── widgets/         # -> todo_list_item.dart, add_todo_fab.dart
+    └── settings/
+        ├── domain/              # -> user_preferences.dart + repository contract
+        ├── data/                # -> Isar singleton model (id=0), mapper, repository
+        └── presentation/        # -> settings notifier/provider and SettingsScreen
 ```
 
 ---
@@ -174,4 +179,18 @@ flutter test
 
 - **Notifier Tests (Unit)**: Validate handling of Loading / Retry states (throwing rejected Futures), intercept CRUD logic, and confirm subscription cancellation.
 - **Widget Tests (UI)**: Dedicated, simulated resources using `async*` events are injected into the widgets to faithfully replicate the database's delay cycle (fixing potential `pumpAndSettle` pitfalls).
-- **Golden Tests**: Verifies UI components pixel-by-pixel for both empty and populated states, freezing the UI size and internal time.
+- **Golden Tests**: Verifies UI components pixel-by-pixel for Todo empty/populated states and the Settings screen, freezing viewport size, theme-related inputs, and deterministic fixture data.
+
+## 🧭 Release Engineering & Git Automation
+
+The repository includes [`scripts/create_atomic_history.sh`](scripts/create_atomic_history.sh), an advanced release-engineering utility for rebuilding the project history as a **Compile-Safe Commit Graph**.
+
+Unlike a simple `git add` script, it evolves the codebase step by step:
+
+- creates a minimal runnable Flutter skeleton before feature code appears,
+- writes transitional Todo files without Category imports until the category relation is introduced,
+- regenerates Riverpod and Isar `.g.dart` files in the same commits as their annotated sources,
+- updates golden baselines when UI changes,
+- restores the final Settings integration only at the end of the timeline.
+
+Each generated commit uses Conventional Commits, explicit historical dates, and matching `GIT_AUTHOR_DATE`, `GIT_COMMITTER_DATE`, and `--date` values. The script also enforces a clean working tree before running, then executes code generation and tests at the relevant timeline points so that checking out any generated commit remains build-safe.
