@@ -2,6 +2,8 @@
 
 A production-grade reference architecture and starter blueprint for Flutter applications, engineered for offline resilience, predictable state boundaries, and lean scalability.
 
+> **Note:** While distributed as an advanced starter boilerplate to remain easily discoverable for developers, this repository is fully documented and structured as a comprehensive Reference Architecture.
+
 ## 🎯 Philosophy: Why This Blueprint Exists
 
 Most Flutter boilerplates suffer from "kitchen-sink syndrome" — they inject dozens of third-party packages "just in case," forcing your project into unnecessary architectural debt from day one.
@@ -32,6 +34,16 @@ This application serves as a full-fledged testing ground for the implemented pat
 - **Testing**: `flutter_test`, `mocktail` (for repository mocking)
 - **Misc**: `intl` for elegant date formatting (e.g., on the details screen).
 
+## 📐 Design Principles
+
+- **Feature-First Organization**: Keeps the codebase modular and self-contained as the application grows.
+- **Local-First by Default**: The local database dictates the application state, ensuring 100% offline resilience.
+- **Dependency Inversion**: Strict compilation boundaries where Data and Presentation layers depend on the pure Domain core.
+- **Single Source of Truth**: UI components subscribe directly to reactive database streams via targeted identifiers.
+- **Minimal Dependencies**: Leveraging native Dart 3+ features (Records, Patterns) to minimize reliance on third-party macro layers.
+- **Synchronous Mappers**: Complete isolation between database schemas and domain logic via stateless transformers.
+- **Test-Driven Predictability**: Built to support deterministic unit, widget, and visual regression (Golden) testing.
+
 ---
 ## 🎯 Target Audience: When to Use This Blueprint
 
@@ -44,9 +56,9 @@ This blueprint is highly opinionated and tailored for specific architectural req
 | • Apps requiring instant persistence & reactive local UI streams | • Real-time collaborative multi-user document editors |
 | • High-fidelity MVPs designed to validate local core logic | • Enterprise systems strictly tied to microservice clients |
 
-## 🚫 The Power of Omission: Why Not X?
+## 🧠 Architectural Decisions
 
-An architect is defined by what they choose *not* to include. Here is why you won't find several industry-standard packages in this repository:
+An architect is defined by what they choose *not* to include. Below is the technical rationale behind selecting native patterns over several industry-standard packages in this blueprint:
 
 | Package | Why it was omitted                                                                                                                                                                                                                            |
 | :--- |:----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
@@ -87,9 +99,9 @@ lib/
 
 ---
 
-## 🏗 Architectural Craftsmanship
+## 🏗 Architectural Overview
 
-This boilerplate places maximum emphasis on **Dependency Inversion** and the predictability of behaviors during asynchronous I/O operations.
+This blueprint places maximum emphasis on Dependency Inversion and the predictability of behaviors during asynchronous I/O operations.
 
 ### Layer Separation (Class Diagram)
 
