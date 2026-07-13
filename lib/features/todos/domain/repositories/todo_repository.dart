@@ -1,5 +1,6 @@
 import '../entities/todo.dart';
 
+/// Repository interface for managing todo items.
 abstract class TodoRepository {
   Stream<List<Todo>> watchAll();
 

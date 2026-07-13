@@ -1,3 +1,4 @@
+/// Domain entity representing a todo category.
 class Category {
   const Category({
     required this.id,
@@ -6,11 +7,7 @@ class Category {
   });
 
   final int id;
-
-  /// Display name of the category, e.g. "Work", "Personal".
   final String name;
-
-  /// ARGB hex color string, e.g. "FF6200EE".
   final String colorHex;
 
   Category copyWith({int? id, String? name, String? colorHex}) {

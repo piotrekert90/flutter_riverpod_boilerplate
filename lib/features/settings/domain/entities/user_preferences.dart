@@ -1,5 +1,7 @@
+/// Supported application theme modes.
 enum UserThemeMode { light, dark, system }
 
+/// Domain entity representing user preferences.
 class UserPreferences {
   const UserPreferences({
     required this.themeMode,

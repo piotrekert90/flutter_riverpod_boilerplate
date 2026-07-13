@@ -1,5 +1,6 @@
 import 'category.dart';
 
+/// Domain entity representing a single todo item.
 class Todo {
   const Todo({
     required this.id,
@@ -13,9 +14,6 @@ class Todo {
   final String title;
   final bool isCompleted;
   final DateTime createdAt;
-
-  /// Optional category this todo belongs to.
-  /// Null when the todo has not been assigned to any category.
   final Category? category;
 
   Todo copyWith({
@@ -23,7 +21,6 @@ class Todo {
     String? title,
     bool? isCompleted,
     DateTime? createdAt,
-    // Use a sentinel to distinguish "pass null explicitly" from "keep current value".
     Object? category = _sentinel,
   }) {
     return Todo(
@@ -50,5 +47,4 @@ class Todo {
   int get hashCode => Object.hash(id, title, isCompleted, createdAt, category);
 }
 
-// Private sentinel used by copyWith to distinguish "omitted" from explicit null.
 const Object _sentinel = Object();
