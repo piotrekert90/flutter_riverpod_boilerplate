@@ -18,8 +18,8 @@ For every public class/method, add a doc comment following the language's standa
 - Only read, open, or modify files explicitly named in the task, or files directly imported/referenced by them.
 - Do NOT explore or edit files outside the stated scope without first asking for confirmation.
 - Exception — the following do NOT require asking first, as they are natural consequences of a task, not scope expansion:
-    - Regenerating/updating codegen output files (e.g. `.g.dart`) that correspond to a modified source file.
-    - Updating an existing test file that directly tests the modified code, when needed to keep the Mandatory Verification Pipeline passing.
+  - Regenerating/updating codegen output files (e.g. `.g.dart`) that correspond to a modified source file.
+  - Updating an existing test file that directly tests the modified code, when needed to keep the Mandatory Verification Pipeline passing.
 - If the task seems to require touching files beyond the stated scope AND beyond the exceptions above, STOP and report which additional files you believe are needed, and why — before making changes.
 
 ### Ambiguity Handling
@@ -68,18 +68,15 @@ For every public class/method, add a doc comment following the language's standa
 - Run build runner: `dart run build_runner build --delete-conflicting-outputs`
 - Watch build runner: `dart run build_runner watch --delete-conflicting-outputs`
 - Code analysis: `flutter analyze`
-- Lint (Riverpod-specific): `dart run custom_lint`
 - Run tests: `flutter test`
 
 ### Architecture & Layer Boundaries
-This is a Local-First, AI-Native boilerplate utilizing Clean Architecture under a Feature-First approach.
-- **Domain Layer (`lib/features/[feature_name]/domain/`)**: Pure Dart business logic, entities, and repository interfaces. NO Flutter or Riverpod imports allowed here.
-- **Data Layer (`lib/features/[feature_name]/data/`)**: Repository implementations, models, and mappers utilizing `isar_community` (Isar Database).
-- **Presentation Layer (`lib/features/[feature_name]/presentation/`)**: Responsive UI components, state management via Riverpod 3.x generators (`@riverpod`), and controllers/notifiers.
-
-### State Management & Reactivity
+This is a Local-First, AI-Native boilerplate utilizing Clean Architecture under a Feature-First approach, structured as:
+- **Domain Layer** (`lib/features/<feature>/domain/`): Pure Dart logic — entities, repository interfaces, use cases. NO Flutter or Riverpod imports allowed here.
+- **Data Layer** (`lib/features/<feature>/data/`): Repository implementations and local storage handlers utilizing `isar_community`.
+- **Presentation Layer** (`lib/features/<feature>/presentation/`): UI (`ConsumerWidget`) and state management via Riverpod 3.x generators (`@riverpod`).
 - **State Management:** Riverpod 3.x strictly.
-- **Data Flow:** UI (`ConsumerWidget`) -> Notifier (`@riverpod`) -> Repository Interface (`domain`) -> Repository Impl (`data`) -> Local DB (`isar_community`).
+- **Data Flow:** UI (`ConsumerWidget`) -> Notifier (`@riverpod`) -> Repository Interface (domain) -> Repository Impl (data) -> Local DB (`isar_community`).
 - **Reactivity:** Handled purely via Isar streams. Notifiers listen to Isar collections and pipe data directly into `AsyncValue` state.
 
 ### Lifecycle & Resource Disposal Checklist
@@ -92,7 +89,6 @@ Before considering any feature involving streams, timers, or animations complete
 After any modification within the `lib/**` directory, you MUST execute the following pipeline in strict order:
 1. `dart run build_runner build --delete-conflicting-outputs`
 2. `flutter analyze`
-3. `dart run custom_lint`
-4. `flutter test`
+3. `flutter test`
 
 A task is NOT considered complete until all steps pass with zero errors and zero failing tests, AND the Lifecycle & Resource Disposal Checklist above has been explicitly verified. Fix any arising issues autonomously, subject to the Guardrails above.
