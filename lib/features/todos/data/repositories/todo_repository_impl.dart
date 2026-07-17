@@ -11,27 +11,20 @@ class TodoRepositoryImpl implements TodoRepository {
 
   final Isar _isar;
 
-  Future<Todo> _loadAndMap(TodoModel model) async {
-    await model.category.load();
-    return model.toEntity();
-  }
-
   @override
   Stream<List<Todo>> watchAll() {
     return _isar.todoModels
         .where()
         .sortByCreatedAtDesc()
         .watch(fireImmediately: true)
-        .asyncMap((models) => Future.wait(models.map(_loadAndMap)));
+        .map((models) => models.map((m) => m.toEntity()).toList());
   }
 
   @override
   Stream<Todo?> watchById(int id) {
     return _isar.todoModels
         .watchObject(id, fireImmediately: true)
-        .asyncMap(
-          (model) => model != null ? _loadAndMap(model) : Future.value(null),
-        );
+        .map((model) => model?.toEntity());
   }
 
   @override
@@ -40,7 +33,7 @@ class TodoRepositoryImpl implements TodoRepository {
         .where()
         .sortByCreatedAtDesc()
         .findAll();
-    return Future.wait(models.map(_loadAndMap));
+    return models.map((m) => m.toEntity()).toList();
   }
 
   @override

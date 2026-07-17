@@ -36,14 +36,7 @@ const TodoModelSchema = CollectionSchema(
   deserializeProp: _todoModelDeserializeProp,
   idName: r'id',
   indexes: {},
-  links: {
-    r'category': LinkSchema(
-      id: -5869275399898924258,
-      name: r'category',
-      target: r'CategoryModel',
-      single: true,
-    ),
-  },
+  links: {},
   embeddedSchemas: {},
 
   getId: _todoModelGetId,
@@ -110,17 +103,11 @@ Id _todoModelGetId(TodoModel object) {
 }
 
 List<IsarLinkBase<dynamic>> _todoModelGetLinks(TodoModel object) {
-  return [object.category];
+  return [];
 }
 
 void _todoModelAttach(IsarCollection<dynamic> col, Id id, TodoModel object) {
   object.id = id;
-  object.category.attach(
-    col,
-    col.isar.collection<CategoryModel>(),
-    r'category',
-    id,
-  );
 }
 
 extension TodoModelQueryWhereSort
@@ -482,21 +469,7 @@ extension TodoModelQueryObject
     on QueryBuilder<TodoModel, TodoModel, QFilterCondition> {}
 
 extension TodoModelQueryLinks
-    on QueryBuilder<TodoModel, TodoModel, QFilterCondition> {
-  QueryBuilder<TodoModel, TodoModel, QAfterFilterCondition> category(
-    FilterQuery<CategoryModel> q,
-  ) {
-    return QueryBuilder.apply(this, (query) {
-      return query.link(q, r'category');
-    });
-  }
-
-  QueryBuilder<TodoModel, TodoModel, QAfterFilterCondition> categoryIsNull() {
-    return QueryBuilder.apply(this, (query) {
-      return query.linkLength(r'category', 0, true, 0, true);
-    });
-  }
-}
+    on QueryBuilder<TodoModel, TodoModel, QFilterCondition> {}
 
 extension TodoModelQuerySortBy on QueryBuilder<TodoModel, TodoModel, QSortBy> {
   QueryBuilder<TodoModel, TodoModel, QAfterSortBy> sortByCreatedAt() {

@@ -4,7 +4,6 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mocktail/mocktail.dart';
 
-import 'package:flutter_riverpod_boilerplate/features/todos/domain/entities/category.dart';
 import 'package:flutter_riverpod_boilerplate/features/todos/domain/entities/todo.dart';
 import 'package:flutter_riverpod_boilerplate/features/todos/domain/repositories/todo_repository.dart';
 import 'package:flutter_riverpod_boilerplate/features/todos/presentation/providers/todo_detail_notifier.dart';
@@ -17,13 +16,11 @@ class MockTodoRepository extends Mock implements TodoRepository {}
 // Helper test data
 const _tId = 1;
 final _tCreatedAt = DateTime(2024, 1, 1);
-const _tCategory = Category(id: 1, name: 'Work', colorHex: 'FF0000');
 final _tTodo = Todo(
   id: _tId,
   title: 'Test Todo',
   isCompleted: false,
   createdAt: _tCreatedAt,
-  category: _tCategory,
 );
 final _tTodos = [_tTodo];
 
@@ -287,8 +284,6 @@ void main() {
 
       // Assert
       expect(result, _tTodo);
-      // Verify that the related category is present in the emitted object
-      expect(result?.category, _tCategory);
       verify(() => mockRepo.watchById(_tId)).called(1);
     });
 

@@ -18,7 +18,6 @@ This Blueprint is built on a different conviction: **maximal architectural contr
 
 This application serves as a full-fledged testing ground for the implemented patterns. It includes:
 - **Full CRUD** for tasks (Todo).
-- **Relations (1:1 / N:1)**: Each task can have an associated *Category*.
 - **Todo List**: A reactive list with checkboxes and Swipe-to-delete functionality.
 - **Todo Detail Screen**: A standalone, independent view that subscribes to a specific resource by ID, protecting the application against memory leaks by leveraging Riverpod's `family` and `autoDispose`.
 - **Settings Module**: Implementation of a global configuration layer (`ThemeMode`) backed by an Isar database singleton collection (`id=0`), reactively bound to the root `MaterialApp`.
@@ -81,11 +80,11 @@ lib/
 └── features/
     ├── todos/
     │   ├── domain/              # 1. DOMAIN LAYER (Independent)
-    │   │   ├── entities/        # -> todo.dart, category.dart
+    │   │   ├── entities/        # -> todo.dart
     │   │   └── repositories/    # -> todo_repository.dart (interface)
     │   ├── data/                # 2. DATA LAYER (Dependent on external APIs/DBs)
-    │   │   ├── models/          # -> todo_model.dart, category_model.dart (Isar)
-    │   │   ├── mappers/         # -> todo_mapper.dart, category_mapper.dart
+    │   │   ├── models/          # -> todo_model.dart (Isar)
+    │   │   ├── mappers/         # -> todo_mapper.dart
     │   │   └── repositories/    # -> todo_repository_impl.dart (Implementation)
     │   └── presentation/        # 3. PRESENTATION LAYER (UI + State Management)
     │       ├── providers/       # -> todo_notifier.dart, todo_detail_notifier.dart
@@ -119,14 +118,12 @@ classDiagram
     namespace Data {
         class TodoRepositoryImpl
         class TodoModel
-        class CategoryModel
         class TodoMapper
     }
 
     %% Domain Layer (Center)
     namespace Domain {
         class Todo
-        class Category
         class TodoRepository {
             <<interface>>
         }
@@ -142,7 +139,6 @@ classDiagram
     TodoMapper ..> Todo : Creates entities (toEntity)
     TodoMapper ..> TodoModel : Maps (toModel)
     TodoRepositoryImpl --> TodoModel : DB (Reads / Writes)
-    TodoRepositoryImpl --> CategoryModel : Reads (IsarLink)
 ```
 
 ### Reactivity and Single Source of Truth (Sequence Diagram)
@@ -166,16 +162,11 @@ sequenceDiagram
     DB-->>Repo: Emits: TodoModel (Event 1)
     deactivate DB
     
-    note right of Repo: asyncMap uses _loadAndMap helper
-    
-    Repo->>DB: await model.category.load()
-    activate DB
-    DB-->>Repo: Returns linked CategoryModel
-    deactivate DB
+    note right of Repo: map uses toEntity
     
     Repo->>Mapper: toEntity()
     activate Mapper
-    Mapper-->>Repo: Returns pure Todo entity (with Category)
+    Mapper-->>Repo: Returns pure Todo entity
     deactivate Mapper
     
     Repo-->>Prov: Emits Todo (Mapped Event)
@@ -188,7 +179,7 @@ sequenceDiagram
 
 ### 🧠 Key Architectural Concepts:
 
-1. **I/O Isolation Pattern (`_loadAndMap`)**: Mappers (e.g., `TodoMapper`), following best practices, remain fully **synchronous, stateless functions (extensions)**. The entire asynchronous burden of loading relations (e.g., `await model.category.load()`) falls exclusively on the Repository (using `asyncMap`). The mapper never executes I/O operations.
+1. **I/O Isolation Pattern**: Mappers (e.g., `TodoMapper`), following best practices, remain fully **synchronous, stateless functions (extensions)**. The mapper never executes I/O operations.
 2. **Single Source of Truth via ID**: Layers exchange only the simplest identifiers (Int/String). Every new screen, component, or dialog fetches the latest data structure independently. This eliminates the risk of passing outdated snapshots through navigation parameters.
 3. **AutoDispose and Resource Deallocation**: When the screen tied to a subscription is destroyed (e.g., the user taps *Back*), the `ref.onDispose` method kills the corresponding stream on the Isar database side, thereby conserving RAM.
 
@@ -230,22 +221,9 @@ flutter test
 - [x] Riverpod 3.x & Isar Community integration
 - [x] Strict I/O Isolation Pattern via Synchronous Mappers
 - [x] Comprehensive Test Suite (Unit, Widget, and Golden Tests)
-- [x] Compile-Safe Commit Graph Automation (`create_atomic_history.sh`)
 - [ ] Multi-language Localization (intl wrapper enhancement)
 - [ ] Production-ready GitHub Actions CI/CD Pipeline
 - [ ] Reference Network Sync Module (Edge-to-Cloud sync draft)
 - [ ] CLI Feature Template Generator for faster scaffolding
 
-## 🧭 Release Engineering & Git Automation
 
-The repository includes [`scripts/create_atomic_history.sh`](scripts/create_atomic_history.sh), an advanced release-engineering utility for rebuilding the project history as a **Compile-Safe Commit Graph**.
-
-Unlike a simple `git add` script, it evolves the codebase step by step:
-
-- creates a minimal runnable Flutter skeleton before feature code appears,
-- writes transitional Todo files without Category imports until the category relation is introduced,
-- regenerates Riverpod and Isar `.g.dart` files in the same commits as their annotated sources,
-- updates golden baselines when UI changes,
-- restores the final Settings integration only at the end of the timeline.
-
-Each generated commit uses Conventional Commits, explicit historical dates, and matching `GIT_AUTHOR_DATE`, `GIT_COMMITTER_DATE`, and `--date` values. The script also enforces a clean working tree before running, then executes code generation and tests at the relevant timeline points so that checking out any generated commit remains build-safe.

@@ -81,54 +81,6 @@ class TodoDetailScreen extends ConsumerWidget {
                 label: 'Data utworzenia',
                 value: dateFormat.format(todo.createdAt),
               ),
-              if (todo.category != null) ...[
-                const Divider(height: 32),
-                Row(
-                  children: [
-                    const Icon(Icons.folder, size: 24, color: Colors.grey),
-                    const SizedBox(width: 16),
-                    Expanded(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(
-                            'Kategoria',
-                            style: Theme.of(context).textTheme.bodySmall
-                                ?.copyWith(
-                                  color: Theme.of(
-                                    context,
-                                  ).colorScheme.onSurfaceVariant,
-                                ),
-                          ),
-                          const SizedBox(height: 4),
-                          Row(
-                            children: [
-                              Container(
-                                width: 16,
-                                height: 16,
-                                decoration: BoxDecoration(
-                                  color: Color(
-                                    int.parse(
-                                      todo.category!.colorHex,
-                                      radix: 16,
-                                    ),
-                                  ),
-                                  shape: BoxShape.circle,
-                                ),
-                              ),
-                              const SizedBox(width: 8),
-                              Text(
-                                todo.category!.name,
-                                style: Theme.of(context).textTheme.bodyLarge,
-                              ),
-                            ],
-                          ),
-                        ],
-                      ),
-                    ),
-                  ],
-                ),
-              ],
             ],
           );
         },

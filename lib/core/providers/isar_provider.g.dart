@@ -8,12 +8,16 @@ part of 'isar_provider.dart';
 
 // GENERATED CODE - DO NOT MODIFY BY HAND
 // ignore_for_file: type=lint, type=warning
+/// Provides the shared Isar instance, overridden at startup in [main].
 
 @ProviderFor(isar)
 final isarProvider = IsarProvider._();
 
+/// Provides the shared Isar instance, overridden at startup in [main].
+
 final class IsarProvider extends $FunctionalProvider<Isar, Isar, Isar>
     with $Provider<Isar> {
+  /// Provides the shared Isar instance, overridden at startup in [main].
   IsarProvider._()
     : super(
         from: null,

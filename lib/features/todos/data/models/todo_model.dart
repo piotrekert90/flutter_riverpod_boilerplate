@@ -1,7 +1,5 @@
 import 'package:isar_community/isar.dart';
 
-import 'category_model.dart';
-
 part 'todo_model.g.dart';
 
 /// Persistent representation of a [Todo] domain entity.
@@ -14,6 +12,4 @@ class TodoModel {
   bool isCompleted = false;
 
   late DateTime createdAt;
-
-  final category = IsarLink<CategoryModel>();
 }
