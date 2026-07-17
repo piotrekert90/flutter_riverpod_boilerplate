@@ -13,7 +13,7 @@ part of 'todo_notifier.dart';
 final todoListProvider = TodoListProvider._();
 
 final class TodoListProvider
-    extends $AsyncNotifierProvider<TodoList, List<Todo>> {
+    extends $StreamNotifierProvider<TodoList, List<Todo>> {
   TodoListProvider._()
     : super(
         from: null,
@@ -33,10 +33,10 @@ final class TodoListProvider
   TodoList create() => TodoList();
 }
 
-String _$todoListHash() => r'6dc1d94661e80f50d8e964b09b8fe958f4b88dbe';
+String _$todoListHash() => r'08dfb21aafd542848aba1ce76b0308dece3660be';
 
-abstract class _$TodoList extends $AsyncNotifier<List<Todo>> {
-  FutureOr<List<Todo>> build();
+abstract class _$TodoList extends $StreamNotifier<List<Todo>> {
+  Stream<List<Todo>> build();
   @$mustCallSuper
   @override
   void runBuild() {

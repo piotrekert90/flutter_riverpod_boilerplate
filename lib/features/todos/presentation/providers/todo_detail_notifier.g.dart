@@ -13,7 +13,7 @@ part of 'todo_detail_notifier.dart';
 final todoDetailProvider = TodoDetailFamily._();
 
 final class TodoDetailProvider
-    extends $AsyncNotifierProvider<TodoDetail, Todo?> {
+    extends $StreamNotifierProvider<TodoDetail, Todo?> {
   TodoDetailProvider._({
     required TodoDetailFamily super.from,
     required int super.argument,
@@ -50,7 +50,7 @@ final class TodoDetailProvider
   }
 }
 
-String _$todoDetailHash() => r'd3ee66b8f7637714f0dc5767c76ee05928293fd4';
+String _$todoDetailHash() => r'b31202548e5c4b10f5c7a59c98f7ea91a1c09b16';
 
 final class TodoDetailFamily extends $Family
     with
@@ -58,7 +58,7 @@ final class TodoDetailFamily extends $Family
           TodoDetail,
           AsyncValue<Todo?>,
           Todo?,
-          FutureOr<Todo?>,
+          Stream<Todo?>,
           int
         > {
   TodoDetailFamily._()
@@ -77,11 +77,11 @@ final class TodoDetailFamily extends $Family
   String toString() => r'todoDetailProvider';
 }
 
-abstract class _$TodoDetail extends $AsyncNotifier<Todo?> {
+abstract class _$TodoDetail extends $StreamNotifier<Todo?> {
   late final _$args = ref.$arg as int;
   int get id => _$args;
 
-  FutureOr<Todo?> build(int id);
+  Stream<Todo?> build(int id);
   @$mustCallSuper
   @override
   void runBuild() {

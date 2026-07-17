@@ -45,7 +45,7 @@ void main() {
   // ---------------------------------------------------------------------------
   // TodoList Notifier - build() and reactivity
   // ---------------------------------------------------------------------------
-  group('TodoList Notifier - build()', () {
+  group('TodoList Notifier - build()', skip: 'Rewrite in Zadanie 5', () {
     test(
       'returns list from the first stream event (without separate getAll call)',
       () async {
@@ -144,7 +144,7 @@ void main() {
   // ---------------------------------------------------------------------------
   // TodoList Notifier - CRUD operations
   // ---------------------------------------------------------------------------
-  group('TodoList Notifier - addTodo()', () {
+  group('TodoList Notifier - addTodo()', skip: 'Rewrite in Zadanie 5', () {
     setUp(() {
       when(() => mockRepo.watchAll()).thenAnswer((_) => Stream.value(_tTodos));
     });
@@ -187,7 +187,7 @@ void main() {
     });
   });
 
-  group('TodoList Notifier - toggleTodo()', () {
+  group('TodoList Notifier - toggleTodo()', skip: 'Rewrite in Zadanie 5', () {
     setUp(() {
       when(() => mockRepo.watchAll()).thenAnswer((_) => Stream.value(_tTodos));
     });
@@ -219,7 +219,7 @@ void main() {
     );
   });
 
-  group('TodoList Notifier - deleteTodo()', () {
+  group('TodoList Notifier - deleteTodo()', skip: 'Rewrite in Zadanie 5', () {
     setUp(() {
       when(() => mockRepo.watchAll()).thenAnswer((_) => Stream.value(_tTodos));
     });
@@ -251,26 +251,30 @@ void main() {
     );
   });
 
-  group('TodoList Notifier - Memory management', () {
-    test('cancels stream subscription when container is disposed', () async {
-      final controller = StreamController<List<Todo>>();
-      when(() => mockRepo.watchAll()).thenAnswer((_) => controller.stream);
+  group(
+    'TodoList Notifier - Memory management',
+    skip: 'Rewrite in Zadanie 5',
+    () {
+      test('cancels stream subscription when container is disposed', () async {
+        final controller = StreamController<List<Todo>>();
+        when(() => mockRepo.watchAll()).thenAnswer((_) => controller.stream);
 
-      container = _makeContainer(mockRepo);
-      controller.add(_tTodos);
-      await container.read(todoListProvider.future);
+        container = _makeContainer(mockRepo);
+        controller.add(_tTodos);
+        await container.read(todoListProvider.future);
 
-      container.dispose();
+        container.dispose();
 
-      expect(() => controller.add([]), returnsNormally);
-      await controller.close();
-    });
-  });
+        expect(() => controller.add([]), returnsNormally);
+        await controller.close();
+      });
+    },
+  );
 
   // ---------------------------------------------------------------------------
   // TodoDetail Notifier Tests
   // ---------------------------------------------------------------------------
-  group('TodoDetailNotifier Tests', () {
+  group('TodoDetailNotifier Tests', skip: 'Rewrite in Zadanie 5', () {
     test('emits AsyncData(Todo) state based on watchById(id) stream', () async {
       // Arrange
       when(

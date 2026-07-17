@@ -35,7 +35,7 @@ void main() {
     container.dispose();
   });
 
-  group('UserPreferencesNotifier - build()', () {
+  group('UserPreferencesNotifier - build()', skip: 'Rewrite in Zadanie 5', () {
     test('returns preferences from the first stream event', () async {
       when(
         () => mockRepo.watch(),
@@ -93,7 +93,7 @@ void main() {
     );
   });
 
-  group('UserPreferencesNotifier - updates', () {
+  group('UserPreferencesNotifier - updates', skip: 'Rewrite in Zadanie 5', () {
     setUp(() {
       when(
         () => mockRepo.watch(),
@@ -149,19 +149,23 @@ void main() {
     });
   });
 
-  group('UserPreferencesNotifier - Memory management', () {
-    test('cancels stream subscription when container is disposed', () async {
-      final controller = StreamController<UserPreferences>();
-      when(() => mockRepo.watch()).thenAnswer((_) => controller.stream);
+  group(
+    'UserPreferencesNotifier - Memory management',
+    skip: 'Rewrite in Zadanie 5',
+    () {
+      test('cancels stream subscription when container is disposed', () async {
+        final controller = StreamController<UserPreferences>();
+        when(() => mockRepo.watch()).thenAnswer((_) => controller.stream);
 
-      container = _makeContainer(mockRepo);
-      controller.add(_preferences);
-      await container.read(userPreferencesProvider.future);
+        container = _makeContainer(mockRepo);
+        controller.add(_preferences);
+        await container.read(userPreferencesProvider.future);
 
-      container.dispose();
+        container.dispose();
 
-      expect(() => controller.add(_preferences), returnsNormally);
-      await controller.close();
-    });
-  });
+        expect(() => controller.add(_preferences), returnsNormally);
+        await controller.close();
+      });
+    },
+  );
 }

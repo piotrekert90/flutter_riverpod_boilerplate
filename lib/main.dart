@@ -13,10 +13,12 @@ Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
   final directory = await getApplicationDocumentsDirectory();
-  final isar = await Isar.open([
-    TodoModelSchema,
-    UserPreferencesModelSchema,
-  ], directory: directory.path);
+  final isar =
+      Isar.getInstance() ??
+      await Isar.open([
+        TodoModelSchema,
+        UserPreferencesModelSchema,
+      ], directory: directory.path);
 
   runApp(
     ProviderScope(

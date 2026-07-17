@@ -10,28 +10,9 @@ part 'todo_notifier.g.dart';
 @riverpod
 class TodoList extends _$TodoList {
   @override
-  Future<List<Todo>> build() async {
+  Stream<List<Todo>> build() {
     final repository = ref.watch(todoRepositoryProvider);
-    final completer = Completer<List<Todo>>();
-
-    final subscription = repository.watchAll().listen(
-      (todos) {
-        if (!completer.isCompleted) {
-          completer.complete(todos);
-        }
-        state = AsyncData(todos);
-      },
-      onError: (error, stackTrace) {
-        if (!completer.isCompleted) {
-          completer.completeError(error, stackTrace);
-        }
-        state = AsyncError(error, stackTrace);
-      },
-    );
-
-    ref.onDispose(subscription.cancel);
-
-    return completer.future;
+    return repository.watchAll();
   }
 
   Future<void> addTodo(String title) async {
@@ -39,27 +20,14 @@ class TodoList extends _$TodoList {
     if (trimmedTitle.isEmpty) {
       return;
     }
-
-    try {
-      await ref.read(todoRepositoryProvider).add(title: trimmedTitle);
-    } catch (e, stackTrace) {
-      state = AsyncError(e, stackTrace);
-    }
+    await ref.read(todoRepositoryProvider).add(title: trimmedTitle);
   }
 
   Future<void> toggleTodo(int id) async {
-    try {
-      await ref.read(todoRepositoryProvider).toggleCompleted(id: id);
-    } catch (e, stackTrace) {
-      state = AsyncError(e, stackTrace);
-    }
+    await ref.read(todoRepositoryProvider).toggleCompleted(id: id);
   }
 
   Future<void> deleteTodo(int id) async {
-    try {
-      await ref.read(todoRepositoryProvider).delete(id: id);
-    } catch (e, stackTrace) {
-      state = AsyncError(e, stackTrace);
-    }
+    await ref.read(todoRepositoryProvider).delete(id: id);
   }
 }
