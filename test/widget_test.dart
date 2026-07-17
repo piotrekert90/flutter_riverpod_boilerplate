@@ -11,6 +11,7 @@ import 'package:flutter_riverpod_boilerplate/features/settings/presentation/prov
 import 'package:flutter_riverpod_boilerplate/features/todos/domain/entities/todo.dart';
 import 'package:flutter_riverpod_boilerplate/features/todos/domain/repositories/todo_repository.dart';
 import 'package:flutter_riverpod_boilerplate/features/todos/presentation/providers/todo_repository_provider.dart';
+import 'package:flutter_riverpod_boilerplate/features/todos/presentation/screens/todo_screen_detail.dart';
 
 class FakeTodoRepository implements TodoRepository {
   final List<Todo> _todos = [];
@@ -167,7 +168,16 @@ void main() {
     await tester.pumpAndSettle();
 
     // Verify that we are on the details screen
+    expect(find.byType(TodoDetailScreen), findsOneWidget);
     expect(find.text('Szczegóły zadania'), findsOneWidget);
     expect(find.text('Status'), findsOneWidget);
+
+    // Simulate tapping the back button
+    await tester.pageBack();
+    await tester.pumpAndSettle();
+
+    // Verify that we returned to the list screen
+    expect(find.byType(TodoDetailScreen), findsNothing);
+    expect(find.text('Zadanie testowe'), findsOneWidget);
   });
 }
