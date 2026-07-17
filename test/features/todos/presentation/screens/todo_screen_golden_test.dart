@@ -1,129 +1,29 @@
-import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 import 'package:flutter_riverpod_boilerplate/app.dart';
-import 'package:flutter_riverpod_boilerplate/features/settings/domain/entities/user_preferences.dart';
-import 'package:flutter_riverpod_boilerplate/features/settings/domain/repositories/user_preferences_repository.dart';
 import 'package:flutter_riverpod_boilerplate/features/settings/presentation/providers/user_preferences_repository_provider.dart';
-import 'package:flutter_riverpod_boilerplate/features/todos/domain/entities/todo.dart';
-import 'package:flutter_riverpod_boilerplate/features/todos/domain/repositories/todo_repository.dart';
 import 'package:flutter_riverpod_boilerplate/features/todos/presentation/providers/todo_repository_provider.dart';
 
-// Use FakeTodoRepository, similar to widget tests, to inject constant data.
-class FakeTodoRepository implements TodoRepository {
-  final List<Todo> _todos = [];
-  final _streamController = StreamController<List<Todo>>.broadcast();
+import '../../../../helpers/fake_todo_repository.dart';
+import '../../../../helpers/fake_user_preferences_repository.dart';
 
-  void _emit() {
-    _streamController.add(List.unmodifiable(_todos));
-  }
-
-  @override
-  Stream<List<Todo>> watchAll() async* {
-    yield List.unmodifiable(_todos);
-    yield* _streamController.stream;
-  }
-
-  @override
-  Stream<Todo?> watchById(int id) async* {
-    yield _todos
-        .where((todo) => todo.id == id)
-        .cast<Todo?>()
-        .firstWhere((_) => true, orElse: () => null);
-    yield* _streamController.stream.map(
-      (todos) => todos
-          .where((todo) => todo.id == id)
-          .cast<Todo?>()
-          .firstWhere((_) => true, orElse: () => null),
-    );
-  }
-
-  @override
-  Future<List<Todo>> getAll() async {
-    return List.unmodifiable(_todos);
-  }
-
-  @override
-  Future<(bool success, String? errorMessage)> add({
-    required String title,
-  }) async {
-    _todos.insert(
-      0,
-      Todo(
-        id: _todos.length + 1,
-        title: title,
-        isCompleted: false,
-        createdAt: DateTime(
-          2025,
-          1,
-          1,
-          10,
-          0,
-        ), // Frozen clock to ensure deterministic golden tests
-      ),
-    );
-    _emit();
-    return (true, null);
-  }
-
-  @override
-  Future<(bool success, String? errorMessage)> toggleCompleted({
-    required int id,
-  }) async {
-    return (true, null);
-  }
-
-  @override
-  Future<(bool success, String? errorMessage)> delete({required int id}) async {
-    return (true, null);
-  }
-
-  void dispose() {
-    _streamController.close();
-  }
-}
-
-class FakeUserPreferencesRepository implements UserPreferencesRepository {
-  final _preferences = UserPreferences.defaults();
-
-  @override
-  Stream<UserPreferences> watch() async* {
-    yield _preferences;
-  }
-
-  @override
-  Future<UserPreferences> get() async {
-    return _preferences;
-  }
-
-  @override
-  Future<(bool success, String? errorMessage)> updateThemeMode(
-    UserThemeMode themeMode,
-  ) async {
-    return (true, null);
-  }
-
-  @override
-  Future<(bool success, String? errorMessage)> updateNotificationsEnabled(
-    bool isEnabled,
-  ) async {
-    return (true, null);
-  }
-}
+// Deterministic clock used to produce stable golden screenshots.
+DateTime _frozenClock() => DateTime(2025, 1, 1, 10, 0);
 
 void main() {
   late FakeTodoRepository repository;
   late FakeUserPreferencesRepository userPreferencesRepository;
 
   setUp(() {
-    repository = FakeTodoRepository();
+    repository = FakeTodoRepository(clock: _frozenClock);
     userPreferencesRepository = FakeUserPreferencesRepository();
   });
 
   tearDown(() {
     repository.dispose();
+    userPreferencesRepository.dispose();
   });
 
   group('Todo Screen Golden Tests', () {
@@ -163,7 +63,7 @@ void main() {
       tester.view.physicalSize = const Size(1080, 2400);
       tester.view.devicePixelRatio = 3.0;
 
-      // Add deterministic tasks
+      // Add deterministic tasks using the frozen clock
       await repository.add(title: 'Napisz dokumentację');
       await repository.add(title: 'Przetestuj aplikację');
 

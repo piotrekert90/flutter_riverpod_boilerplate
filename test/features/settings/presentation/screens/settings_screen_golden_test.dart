@@ -1,53 +1,12 @@
-import 'dart:async';
-
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 import 'package:flutter_riverpod_boilerplate/features/settings/domain/entities/user_preferences.dart';
-import 'package:flutter_riverpod_boilerplate/features/settings/domain/repositories/user_preferences_repository.dart';
 import 'package:flutter_riverpod_boilerplate/features/settings/presentation/providers/user_preferences_repository_provider.dart';
 import 'package:flutter_riverpod_boilerplate/features/settings/presentation/screens/settings_screen.dart';
 
-class FakeUserPreferencesRepository implements UserPreferencesRepository {
-  FakeUserPreferencesRepository(this._preferences);
-
-  UserPreferences _preferences;
-  final _streamController = StreamController<UserPreferences>.broadcast();
-
-  @override
-  Stream<UserPreferences> watch() async* {
-    yield _preferences;
-    yield* _streamController.stream;
-  }
-
-  @override
-  Future<UserPreferences> get() async {
-    return _preferences;
-  }
-
-  @override
-  Future<(bool success, String? errorMessage)> updateThemeMode(
-    UserThemeMode themeMode,
-  ) async {
-    _preferences = _preferences.copyWith(themeMode: themeMode);
-    _streamController.add(_preferences);
-    return (true, null);
-  }
-
-  @override
-  Future<(bool success, String? errorMessage)> updateNotificationsEnabled(
-    bool isEnabled,
-  ) async {
-    _preferences = _preferences.copyWith(isNotificationsEnabled: isEnabled);
-    _streamController.add(_preferences);
-    return (true, null);
-  }
-
-  void dispose() {
-    _streamController.close();
-  }
-}
+import '../../../../helpers/fake_user_preferences_repository.dart';
 
 void main() {
   late FakeUserPreferencesRepository repository;
@@ -61,7 +20,7 @@ void main() {
     tester.view.devicePixelRatio = 3.0;
 
     repository = FakeUserPreferencesRepository(
-      const UserPreferences(
+      initialPreferences: const UserPreferences(
         themeMode: UserThemeMode.dark,
         isNotificationsEnabled: false,
       ),
