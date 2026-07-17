@@ -9,8 +9,12 @@ abstract class UserPreferencesRepository {
   Future<UserPreferences> get();
 
   /// Updates the theme mode.
-  Future<void> updateThemeMode(UserThemeMode themeMode);
+  Future<(bool success, String? errorMessage)> updateThemeMode(
+    UserThemeMode themeMode,
+  );
 
   /// Updates whether notifications are enabled.
-  Future<void> updateNotificationsEnabled(bool isEnabled);
+  Future<(bool success, String? errorMessage)> updateNotificationsEnabled(
+    bool isEnabled,
+  );
 }

@@ -46,20 +46,34 @@ class UserPreferencesRepositoryImpl implements UserPreferencesRepository {
   }
 
   @override
-  Future<void> updateThemeMode(UserThemeMode themeMode) async {
-    await _isar.writeTxn(() async {
-      final model = await _getOrCreateModel();
-      model.themeMode = themeMode.name;
-      await _isar.userPreferencesModels.put(model);
-    });
+  Future<(bool success, String? errorMessage)> updateThemeMode(
+    UserThemeMode themeMode,
+  ) async {
+    try {
+      await _isar.writeTxn(() async {
+        final model = await _getOrCreateModel();
+        model.themeMode = themeMode.name;
+        await _isar.userPreferencesModels.put(model);
+      });
+      return (true, null);
+    } catch (e) {
+      return (false, e.toString());
+    }
   }
 
   @override
-  Future<void> updateNotificationsEnabled(bool isEnabled) async {
-    await _isar.writeTxn(() async {
-      final model = await _getOrCreateModel();
-      model.isNotificationsEnabled = isEnabled;
-      await _isar.userPreferencesModels.put(model);
-    });
+  Future<(bool success, String? errorMessage)> updateNotificationsEnabled(
+    bool isEnabled,
+  ) async {
+    try {
+      await _isar.writeTxn(() async {
+        final model = await _getOrCreateModel();
+        model.isNotificationsEnabled = isEnabled;
+        await _isar.userPreferencesModels.put(model);
+      });
+      return (true, null);
+    } catch (e) {
+      return (false, e.toString());
+    }
   }
 }

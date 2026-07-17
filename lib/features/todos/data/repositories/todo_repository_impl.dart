@@ -39,33 +39,52 @@ class TodoRepositoryImpl implements TodoRepository {
   }
 
   @override
-  Future<void> add({required String title}) async {
-    final model = TodoModel()
-      ..title = title.trim()
-      ..createdAt = DateTime.now();
+  Future<(bool success, String? errorMessage)> add({
+    required String title,
+  }) async {
+    try {
+      final model = TodoModel()
+        ..title = title.trim()
+        ..createdAt = DateTime.now();
 
-    await _isar.writeTxn(() async {
-      await _isar.todoModels.put(model);
-    });
+      await _isar.writeTxn(() async {
+        await _isar.todoModels.put(model);
+      });
+      return (true, null);
+    } catch (e) {
+      return (false, e.toString());
+    }
   }
 
   @override
-  Future<void> toggleCompleted({required int id}) async {
-    await _isar.writeTxn(() async {
-      final model = await _isar.todoModels.get(id);
-      if (model == null) {
-        return;
-      }
+  Future<(bool success, String? errorMessage)> toggleCompleted({
+    required int id,
+  }) async {
+    try {
+      await _isar.writeTxn(() async {
+        final model = await _isar.todoModels.get(id);
+        if (model == null) {
+          return;
+        }
 
-      model.isCompleted = !model.isCompleted;
-      await _isar.todoModels.put(model);
-    });
+        model.isCompleted = !model.isCompleted;
+        await _isar.todoModels.put(model);
+      });
+      return (true, null);
+    } catch (e) {
+      return (false, e.toString());
+    }
   }
 
   @override
-  Future<void> delete({required int id}) async {
-    await _isar.writeTxn(() async {
-      await _isar.todoModels.delete(id);
-    });
+  Future<(bool success, String? errorMessage)> delete({required int id}) async {
+    try {
+      await _isar.writeTxn(() async {
+        await _isar.todoModels.delete(id);
+      });
+      return (true, null);
+    } catch (e) {
+      return (false, e.toString());
+    }
   }
 }

@@ -94,17 +94,42 @@ class TodoScreen extends ConsumerWidget {
               final todo = todos[index];
               return TodoListItem(
                 todo: todo,
-                onToggle: () =>
-                    ref.read(todoListProvider.notifier).toggleTodo(todo.id),
-                onDelete: () =>
-                    ref.read(todoListProvider.notifier).deleteTodo(todo.id),
+                onToggle: () async {
+                  final (success, error) = await ref
+                      .read(todoListProvider.notifier)
+                      .toggleTodo(todo.id);
+                  if (!success && context.mounted) {
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      SnackBar(content: Text(error ?? 'Failed to toggle task')),
+                    );
+                  }
+                },
+                onDelete: () async {
+                  final (success, error) = await ref
+                      .read(todoListProvider.notifier)
+                      .deleteTodo(todo.id);
+                  if (!success && context.mounted) {
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      SnackBar(content: Text(error ?? 'Failed to delete task')),
+                    );
+                  }
+                },
               );
             },
           );
         },
       ),
       floatingActionButton: AddTodoFab(
-        onAdd: (title) => ref.read(todoListProvider.notifier).addTodo(title),
+        onAdd: (title) async {
+          final (success, error) = await ref
+              .read(todoListProvider.notifier)
+              .addTodo(title);
+          if (!success && context.mounted) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(content: Text(error ?? 'Failed to add task')),
+            );
+          }
+        },
       ),
     );
   }

@@ -66,16 +66,25 @@ class SettingsScreen extends ConsumerWidget {
               ],
               selected: {preferences.themeMode},
               onSelectionChanged: (selection) =>
-                  _updateThemeMode(ref, selection.single),
+                  _updateThemeMode(context, ref, selection.single),
             ),
             const Divider(height: 24),
             SwitchListTile(
               title: const Text('Powiadomienia'),
               secondary: const Icon(Icons.notifications_outlined),
               value: preferences.isNotificationsEnabled,
-              onChanged: (value) => ref
-                  .read(userPreferencesProvider.notifier)
-                  .updateNotificationsEnabled(value),
+              onChanged: (value) async {
+                final (success, error) = await ref
+                    .read(userPreferencesProvider.notifier)
+                    .updateNotificationsEnabled(value);
+                if (!success && context.mounted) {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(
+                      content: Text(error ?? 'Failed to update preferences'),
+                    ),
+                  );
+                }
+              },
             ),
           ],
         ),
@@ -83,7 +92,18 @@ class SettingsScreen extends ConsumerWidget {
     );
   }
 
-  void _updateThemeMode(WidgetRef ref, UserThemeMode value) {
-    ref.read(userPreferencesProvider.notifier).updateThemeMode(value);
+  Future<void> _updateThemeMode(
+    BuildContext context,
+    WidgetRef ref,
+    UserThemeMode value,
+  ) async {
+    final (success, error) = await ref
+        .read(userPreferencesProvider.notifier)
+        .updateThemeMode(value);
+    if (!success && context.mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(error ?? 'Failed to update theme mode')),
+      );
+    }
   }
 }

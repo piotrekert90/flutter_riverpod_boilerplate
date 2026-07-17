@@ -27,15 +27,21 @@ class FakeUserPreferencesRepository implements UserPreferencesRepository {
   }
 
   @override
-  Future<void> updateThemeMode(UserThemeMode themeMode) async {
+  Future<(bool success, String? errorMessage)> updateThemeMode(
+    UserThemeMode themeMode,
+  ) async {
     _preferences = _preferences.copyWith(themeMode: themeMode);
     _streamController.add(_preferences);
+    return (true, null);
   }
 
   @override
-  Future<void> updateNotificationsEnabled(bool isEnabled) async {
+  Future<(bool success, String? errorMessage)> updateNotificationsEnabled(
+    bool isEnabled,
+  ) async {
     _preferences = _preferences.copyWith(isNotificationsEnabled: isEnabled);
     _streamController.add(_preferences);
+    return (true, null);
   }
 
   void dispose() {

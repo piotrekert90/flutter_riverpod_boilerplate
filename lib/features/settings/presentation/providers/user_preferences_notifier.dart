@@ -17,15 +17,19 @@ class UserPreferencesNotifier extends _$UserPreferencesNotifier {
   }
 
   /// Updates the user's selected theme mode.
-  Future<void> updateThemeMode(UserThemeMode themeMode) async {
-    await ref
+  Future<(bool success, String? errorMessage)> updateThemeMode(
+    UserThemeMode themeMode,
+  ) async {
+    return await ref
         .read(userPreferencesRepositoryProvider)
         .updateThemeMode(themeMode);
   }
 
   /// Updates the user's notification preferences.
-  Future<void> updateNotificationsEnabled(bool isEnabled) async {
-    await ref
+  Future<(bool success, String? errorMessage)> updateNotificationsEnabled(
+    bool isEnabled,
+  ) async {
+    return await ref
         .read(userPreferencesRepositoryProvider)
         .updateNotificationsEnabled(isEnabled);
   }

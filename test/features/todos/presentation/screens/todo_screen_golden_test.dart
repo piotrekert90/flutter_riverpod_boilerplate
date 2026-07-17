@@ -46,7 +46,9 @@ class FakeTodoRepository implements TodoRepository {
   }
 
   @override
-  Future<void> add({required String title}) async {
+  Future<(bool success, String? errorMessage)> add({
+    required String title,
+  }) async {
     _todos.insert(
       0,
       Todo(
@@ -63,13 +65,20 @@ class FakeTodoRepository implements TodoRepository {
       ),
     );
     _emit();
+    return (true, null);
   }
 
   @override
-  Future<void> toggleCompleted({required int id}) async {}
+  Future<(bool success, String? errorMessage)> toggleCompleted({
+    required int id,
+  }) async {
+    return (true, null);
+  }
 
   @override
-  Future<void> delete({required int id}) async {}
+  Future<(bool success, String? errorMessage)> delete({required int id}) async {
+    return (true, null);
+  }
 
   void dispose() {
     _streamController.close();
@@ -90,10 +99,18 @@ class FakeUserPreferencesRepository implements UserPreferencesRepository {
   }
 
   @override
-  Future<void> updateThemeMode(UserThemeMode themeMode) async {}
+  Future<(bool success, String? errorMessage)> updateThemeMode(
+    UserThemeMode themeMode,
+  ) async {
+    return (true, null);
+  }
 
   @override
-  Future<void> updateNotificationsEnabled(bool isEnabled) async {}
+  Future<(bool success, String? errorMessage)> updateNotificationsEnabled(
+    bool isEnabled,
+  ) async {
+    return (true, null);
+  }
 }
 
 void main() {

@@ -12,11 +12,13 @@ abstract class TodoRepository {
   Future<List<Todo>> getAll();
 
   /// Adds a new todo item with the given title.
-  Future<void> add({required String title});
+  Future<(bool success, String? errorMessage)> add({required String title});
 
   /// Toggles the completion status of a todo item.
-  Future<void> toggleCompleted({required int id});
+  Future<(bool success, String? errorMessage)> toggleCompleted({
+    required int id,
+  });
 
   /// Deletes a todo item by its ID.
-  Future<void> delete({required int id});
+  Future<(bool success, String? errorMessage)> delete({required int id});
 }

@@ -17,21 +17,21 @@ class TodoList extends _$TodoList {
   }
 
   /// Adds a new todo item.
-  Future<void> addTodo(String title) async {
+  Future<(bool success, String? errorMessage)> addTodo(String title) async {
     final trimmedTitle = title.trim();
     if (trimmedTitle.isEmpty) {
-      return;
+      return (false, 'Title cannot be empty');
     }
-    await ref.read(todoRepositoryProvider).add(title: trimmedTitle);
+    return await ref.read(todoRepositoryProvider).add(title: trimmedTitle);
   }
 
   /// Toggles the completion status of a todo item.
-  Future<void> toggleTodo(int id) async {
-    await ref.read(todoRepositoryProvider).toggleCompleted(id: id);
+  Future<(bool success, String? errorMessage)> toggleTodo(int id) async {
+    return await ref.read(todoRepositoryProvider).toggleCompleted(id: id);
   }
 
   /// Deletes a todo item.
-  Future<void> deleteTodo(int id) async {
-    await ref.read(todoRepositoryProvider).delete(id: id);
+  Future<(bool success, String? errorMessage)> deleteTodo(int id) async {
+    return await ref.read(todoRepositoryProvider).delete(id: id);
   }
 }

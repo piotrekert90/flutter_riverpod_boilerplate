@@ -35,13 +35,14 @@ void main() {
     container.dispose();
   });
 
-  group('UserPreferencesNotifier - build()', skip: 'Rewrite in Zadanie 5', () {
+  group('UserPreferencesNotifier - build()', () {
     test('returns preferences from the first stream event', () async {
       when(
         () => mockRepo.watch(),
       ).thenAnswer((_) => Stream.value(_preferences));
 
       container = _makeContainer(mockRepo);
+      container.listen(userPreferencesProvider, (_, _) {});
 
       final result = await container.read(userPreferencesProvider.future);
 
@@ -55,6 +56,7 @@ void main() {
       when(() => mockRepo.watch()).thenAnswer((_) => controller.stream);
 
       container = _makeContainer(mockRepo);
+      container.listen(userPreferencesProvider, (_, _) {});
 
       controller.add(_preferences);
       await container.read(userPreferencesProvider.future);
@@ -74,26 +76,27 @@ void main() {
     });
 
     test(
-      'future throws exception when stream errors before first event',
+      'enters retrying AsyncLoading state when stream consistently errors before first event',
       () async {
-        final exception = Exception('Isar Error');
-        when(() => mockRepo.watch()).thenAnswer((_) => Stream.error(exception));
+        when(
+          () => mockRepo.watch(),
+        ).thenAnswer((_) => Stream.error(Exception('Isar Error')));
 
         container = _makeContainer(mockRepo);
+        container.listen(userPreferencesProvider, (_, _) {});
 
-        await expectLater(
-          container.read(userPreferencesProvider.future),
-          throwsA(isA<Exception>()),
-        );
+        // Allow the stream error and retry cycle to begin
+        await Future.microtask(() {});
 
+        // Assert: Riverpod 3.x StreamNotifier auto-retries indefinitely on stream
+        // errors. The observable state is AsyncLoading (retrying), not AsyncError.
         final state = container.read(userPreferencesProvider);
-        expect(state.hasError, isTrue);
-        expect(state.error, isA<Exception>());
+        expect(state.isLoading, isTrue);
       },
     );
   });
 
-  group('UserPreferencesNotifier - updates', skip: 'Rewrite in Zadanie 5', () {
+  group('UserPreferencesNotifier - updates', () {
     setUp(() {
       when(
         () => mockRepo.watch(),
@@ -103,15 +106,18 @@ void main() {
     test('calls repository.updateThemeMode with selected mode', () async {
       when(
         () => mockRepo.updateThemeMode(UserThemeMode.dark),
-      ).thenAnswer((_) async {});
+      ).thenAnswer((_) async => (true, null));
 
       container = _makeContainer(mockRepo);
+      container.listen(userPreferencesProvider, (_, _) {});
       await container.read(userPreferencesProvider.future);
 
-      await container
+      final (success, error) = await container
           .read(userPreferencesProvider.notifier)
           .updateThemeMode(UserThemeMode.dark);
 
+      expect(success, isTrue);
+      expect(error, isNull);
       verify(() => mockRepo.updateThemeMode(UserThemeMode.dark)).called(1);
     });
 
@@ -120,52 +126,61 @@ void main() {
       () async {
         when(
           () => mockRepo.updateNotificationsEnabled(false),
-        ).thenAnswer((_) async {});
+        ).thenAnswer((_) async => (true, null));
 
         container = _makeContainer(mockRepo);
+        container.listen(userPreferencesProvider, (_, _) {});
         await container.read(userPreferencesProvider.future);
 
-        await container
+        final (success, error) = await container
             .read(userPreferencesProvider.notifier)
             .updateNotificationsEnabled(false);
 
+        expect(success, isTrue);
+        expect(error, isNull);
         verify(() => mockRepo.updateNotificationsEnabled(false)).called(1);
       },
     );
 
-    test('sets AsyncError when updateThemeMode throws an exception', () async {
-      when(
-        () => mockRepo.updateThemeMode(UserThemeMode.light),
-      ).thenThrow(Exception('Database error'));
-
-      container = _makeContainer(mockRepo);
-      await container.read(userPreferencesProvider.future);
-
-      await container
-          .read(userPreferencesProvider.notifier)
-          .updateThemeMode(UserThemeMode.light);
-
-      expect(container.read(userPreferencesProvider), isA<AsyncError>());
-    });
-  });
-
-  group(
-    'UserPreferencesNotifier - Memory management',
-    skip: 'Rewrite in Zadanie 5',
-    () {
-      test('cancels stream subscription when container is disposed', () async {
-        final controller = StreamController<UserPreferences>();
-        when(() => mockRepo.watch()).thenAnswer((_) => controller.stream);
+    test(
+      'returns error record when updateThemeMode fails and state remains AsyncData',
+      () async {
+        when(
+          () => mockRepo.updateThemeMode(UserThemeMode.light),
+        ).thenAnswer((_) async => (false, 'Database error'));
 
         container = _makeContainer(mockRepo);
-        controller.add(_preferences);
+        container.listen(userPreferencesProvider, (_, _) {});
         await container.read(userPreferencesProvider.future);
 
-        container.dispose();
+        final (success, error) = await container
+            .read(userPreferencesProvider.notifier)
+            .updateThemeMode(UserThemeMode.light);
 
-        expect(() => controller.add(_preferences), returnsNormally);
-        await controller.close();
-      });
-    },
-  );
+        expect(success, isFalse);
+        expect(error, 'Database error');
+        expect(
+          container.read(userPreferencesProvider),
+          isA<AsyncData<UserPreferences>>(),
+        );
+      },
+    );
+  });
+
+  group('UserPreferencesNotifier - Memory management', () {
+    test('cancels stream subscription when container is disposed', () async {
+      final controller = StreamController<UserPreferences>();
+      when(() => mockRepo.watch()).thenAnswer((_) => controller.stream);
+
+      container = _makeContainer(mockRepo);
+      container.listen(userPreferencesProvider, (_, _) {});
+      controller.add(_preferences);
+      await container.read(userPreferencesProvider.future);
+
+      container.dispose();
+
+      expect(() => controller.add(_preferences), returnsNormally);
+      await controller.close();
+    });
+  });
 }

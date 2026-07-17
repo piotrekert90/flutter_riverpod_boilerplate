@@ -45,7 +45,7 @@ void main() {
   // ---------------------------------------------------------------------------
   // TodoList Notifier - build() and reactivity
   // ---------------------------------------------------------------------------
-  group('TodoList Notifier - build()', skip: 'Rewrite in Zadanie 5', () {
+  group('TodoList Notifier - build()', () {
     test(
       'returns list from the first stream event (without separate getAll call)',
       () async {
@@ -55,6 +55,7 @@ void main() {
         ).thenAnswer((_) => Stream.value(_tTodos));
 
         container = _makeContainer(mockRepo);
+        container.listen(todoListProvider, (_, _) {});
 
         // Act
         final result = await container.read(todoListProvider.future);
@@ -73,6 +74,7 @@ void main() {
       when(() => mockRepo.watchAll()).thenAnswer((_) => controller.stream);
 
       container = _makeContainer(mockRepo);
+      container.listen(todoListProvider, (_, _) {});
 
       // Emit first event — build() awaits on Completer
       final updatedTodo = _tTodo.copyWith(title: 'Updated');
@@ -93,37 +95,35 @@ void main() {
     });
 
     test(
-      'future throws exception when stream errors out before first event',
+      'enters retrying AsyncLoading state when stream consistently errors before first event',
       () async {
         // Arrange
-        final exception = Exception('Isar Error');
         when(
           () => mockRepo.watchAll(),
-        ).thenAnswer((_) => Stream.error(exception));
+        ).thenAnswer((_) => Stream.error(Exception('Isar Error')));
 
         container = _makeContainer(mockRepo);
+        container.listen(todoListProvider, (_, _) {});
 
-        // Act & Assert: future throws
-        await expectLater(
-          container.read(todoListProvider.future),
-          throwsA(isA<Exception>()),
-        );
+        // Allow the stream error and retry cycle to begin
+        await Future.microtask(() {});
 
-        // State after failed build() has hasError: true (error remembered during retry)
+        // Assert: Riverpod 3.x StreamNotifier auto-retries indefinitely on stream
+        // errors. The observable state is AsyncLoading (retrying), not AsyncError.
         final state = container.read(todoListProvider);
-        expect(state.hasError, isTrue);
-        expect(state.error, isA<Exception>());
+        expect(state.isLoading, isTrue);
       },
     );
 
     test(
-      'state becomes AsyncError when stream throws an error after first event',
+      'retries with previous data preserved when stream throws an error after first event',
       () async {
         // Arrange
         final controller = StreamController<List<Todo>>();
         when(() => mockRepo.watchAll()).thenAnswer((_) => controller.stream);
 
         container = _makeContainer(mockRepo);
+        container.listen(todoListProvider, (_, _) {});
 
         controller.add(_tTodos);
         await container.read(todoListProvider.future);
@@ -132,9 +132,11 @@ void main() {
         controller.addError(Exception('Runtime error'));
         await Future.microtask(() {});
 
-        // Assert
+        // Assert: Riverpod 3.x StreamNotifier enters a retrying AsyncLoading state
+        // preserving the last-known data. It does NOT immediately surface AsyncError.
         final state = container.read(todoListProvider);
-        expect(state, isA<AsyncError>());
+        expect(state.isLoading, isTrue);
+        expect(state.value, _tTodos); // previous data preserved during retry
 
         await controller.close();
       },
@@ -144,18 +146,25 @@ void main() {
   // ---------------------------------------------------------------------------
   // TodoList Notifier - CRUD operations
   // ---------------------------------------------------------------------------
-  group('TodoList Notifier - addTodo()', skip: 'Rewrite in Zadanie 5', () {
+  group('TodoList Notifier - addTodo()', () {
     setUp(() {
       when(() => mockRepo.watchAll()).thenAnswer((_) => Stream.value(_tTodos));
     });
 
     test('calls repository.add with trimmed title', () async {
-      when(() => mockRepo.add(title: 'New task')).thenAnswer((_) async {});
+      when(
+        () => mockRepo.add(title: 'New task'),
+      ).thenAnswer((_) async => (true, null));
       container = _makeContainer(mockRepo);
+      container.listen(todoListProvider, (_, _) {});
       await container.read(todoListProvider.future);
 
-      await container.read(todoListProvider.notifier).addTodo('  New task  ');
+      final (success, error) = await container
+          .read(todoListProvider.notifier)
+          .addTodo('  New task  ');
 
+      expect(success, isTrue);
+      expect(error, isNull);
       verify(() => mockRepo.add(title: 'New task')).called(1);
     });
 
@@ -163,118 +172,153 @@ void main() {
       'does not call add when title is empty or contains only whitespace',
       () async {
         container = _makeContainer(mockRepo);
+        container.listen(todoListProvider, (_, _) {});
         await container.read(todoListProvider.future);
         final notifier = container.read(todoListProvider.notifier);
 
-        await notifier.addTodo('');
-        await notifier.addTodo('   ');
+        final (success1, error1) = await notifier.addTodo('');
+        expect(success1, isFalse);
+        expect(error1, 'Title cannot be empty');
+
+        final (success2, error2) = await notifier.addTodo('   ');
+        expect(success2, isFalse);
+        expect(error2, 'Title cannot be empty');
 
         verifyNever(() => mockRepo.add(title: any(named: 'title')));
       },
     );
 
-    test('sets AsyncError when repository.add throws an exception', () async {
-      when(
-        () => mockRepo.add(title: any(named: 'title')),
-      ).thenThrow(Exception('Database error'));
+    test(
+      'returns error record when repository.add fails and state remains AsyncData',
+      () async {
+        when(
+          () => mockRepo.add(title: any(named: 'title')),
+        ).thenAnswer((_) async => (false, 'Database error'));
 
-      container = _makeContainer(mockRepo);
-      await container.read(todoListProvider.future);
+        container = _makeContainer(mockRepo);
+        container.listen(todoListProvider, (_, _) {});
+        await container.read(todoListProvider.future);
 
-      await container.read(todoListProvider.notifier).addTodo('New task');
+        final (success, error) = await container
+            .read(todoListProvider.notifier)
+            .addTodo('New task');
 
-      expect(container.read(todoListProvider), isA<AsyncError>());
-    });
+        expect(success, isFalse);
+        expect(error, 'Database error');
+        expect(container.read(todoListProvider), isA<AsyncData<List<Todo>>>());
+      },
+    );
   });
 
-  group('TodoList Notifier - toggleTodo()', skip: 'Rewrite in Zadanie 5', () {
+  group('TodoList Notifier - toggleTodo()', () {
     setUp(() {
       when(() => mockRepo.watchAll()).thenAnswer((_) => Stream.value(_tTodos));
     });
 
     test('calls repository.toggleCompleted with correct id', () async {
-      when(() => mockRepo.toggleCompleted(id: _tId)).thenAnswer((_) async {});
+      when(
+        () => mockRepo.toggleCompleted(id: _tId),
+      ).thenAnswer((_) async => (true, null));
       container = _makeContainer(mockRepo);
+      container.listen(todoListProvider, (_, _) {});
       await container.read(todoListProvider.future);
 
-      await container.read(todoListProvider.notifier).toggleTodo(_tId);
+      final (success, error) = await container
+          .read(todoListProvider.notifier)
+          .toggleTodo(_tId);
 
+      expect(success, isTrue);
+      expect(error, isNull);
       verify(() => mockRepo.toggleCompleted(id: _tId)).called(1);
     });
 
     test(
-      'sets AsyncError when repository.toggleCompleted throws an exception',
+      'returns error record when repository.toggleCompleted fails and state remains AsyncData',
       () async {
         when(
           () => mockRepo.toggleCompleted(id: any(named: 'id')),
-        ).thenThrow(Exception('Database error'));
+        ).thenAnswer((_) async => (false, 'Database error'));
 
         container = _makeContainer(mockRepo);
+        container.listen(todoListProvider, (_, _) {});
         await container.read(todoListProvider.future);
 
-        await container.read(todoListProvider.notifier).toggleTodo(_tId);
+        final (success, error) = await container
+            .read(todoListProvider.notifier)
+            .toggleTodo(_tId);
 
-        expect(container.read(todoListProvider), isA<AsyncError>());
+        expect(success, isFalse);
+        expect(error, 'Database error');
+        expect(container.read(todoListProvider), isA<AsyncData<List<Todo>>>());
       },
     );
   });
 
-  group('TodoList Notifier - deleteTodo()', skip: 'Rewrite in Zadanie 5', () {
+  group('TodoList Notifier - deleteTodo()', () {
     setUp(() {
       when(() => mockRepo.watchAll()).thenAnswer((_) => Stream.value(_tTodos));
     });
 
     test('calls repository.delete with correct id', () async {
-      when(() => mockRepo.delete(id: _tId)).thenAnswer((_) async {});
+      when(
+        () => mockRepo.delete(id: _tId),
+      ).thenAnswer((_) async => (true, null));
       container = _makeContainer(mockRepo);
+      container.listen(todoListProvider, (_, _) {});
       await container.read(todoListProvider.future);
 
-      await container.read(todoListProvider.notifier).deleteTodo(_tId);
+      final (success, error) = await container
+          .read(todoListProvider.notifier)
+          .deleteTodo(_tId);
 
+      expect(success, isTrue);
+      expect(error, isNull);
       verify(() => mockRepo.delete(id: _tId)).called(1);
     });
 
     test(
-      'sets AsyncError when repository.delete throws an exception',
+      'returns error record when repository.delete fails and state remains AsyncData',
       () async {
         when(
           () => mockRepo.delete(id: any(named: 'id')),
-        ).thenThrow(Exception('Database error'));
+        ).thenAnswer((_) async => (false, 'Database error'));
 
         container = _makeContainer(mockRepo);
+        container.listen(todoListProvider, (_, _) {});
         await container.read(todoListProvider.future);
 
-        await container.read(todoListProvider.notifier).deleteTodo(_tId);
+        final (success, error) = await container
+            .read(todoListProvider.notifier)
+            .deleteTodo(_tId);
 
-        expect(container.read(todoListProvider), isA<AsyncError>());
+        expect(success, isFalse);
+        expect(error, 'Database error');
+        expect(container.read(todoListProvider), isA<AsyncData<List<Todo>>>());
       },
     );
   });
 
-  group(
-    'TodoList Notifier - Memory management',
-    skip: 'Rewrite in Zadanie 5',
-    () {
-      test('cancels stream subscription when container is disposed', () async {
-        final controller = StreamController<List<Todo>>();
-        when(() => mockRepo.watchAll()).thenAnswer((_) => controller.stream);
+  group('TodoList Notifier - Memory management', () {
+    test('cancels stream subscription when container is disposed', () async {
+      final controller = StreamController<List<Todo>>();
+      when(() => mockRepo.watchAll()).thenAnswer((_) => controller.stream);
 
-        container = _makeContainer(mockRepo);
-        controller.add(_tTodos);
-        await container.read(todoListProvider.future);
+      container = _makeContainer(mockRepo);
+      container.listen(todoListProvider, (_, _) {});
+      controller.add(_tTodos);
+      await container.read(todoListProvider.future);
 
-        container.dispose();
+      container.dispose();
 
-        expect(() => controller.add([]), returnsNormally);
-        await controller.close();
-      });
-    },
-  );
+      expect(() => controller.add([]), returnsNormally);
+      await controller.close();
+    });
+  });
 
   // ---------------------------------------------------------------------------
   // TodoDetail Notifier Tests
   // ---------------------------------------------------------------------------
-  group('TodoDetailNotifier Tests', skip: 'Rewrite in Zadanie 5', () {
+  group('TodoDetailNotifier Tests', () {
     test('emits AsyncData(Todo) state based on watchById(id) stream', () async {
       // Arrange
       when(
@@ -282,6 +326,7 @@ void main() {
       ).thenAnswer((_) => Stream.value(_tTodo));
 
       container = _makeContainer(mockRepo);
+      container.listen(todoDetailProvider(_tId), (_, _) {});
 
       // Act
       final result = await container.read(todoDetailProvider(_tId).future);
@@ -292,30 +337,28 @@ void main() {
     });
 
     test(
-      'sets error (Riverpod retry mode) when watchById errors out before first emission',
+      'enters retrying AsyncLoading state when watchById consistently errors before first emission',
       () async {
         // Arrange
-        final exception = Exception('Database access denied');
         when(
           () => mockRepo.watchById(_tId),
-        ).thenAnswer((_) => Stream.error(exception));
+        ).thenAnswer((_) => Stream.error(Exception('Database access denied')));
 
         container = _makeContainer(mockRepo);
+        container.listen(todoDetailProvider(_tId), (_, _) {});
 
-        // Act & Assert
-        await expectLater(
-          container.read(todoDetailProvider(_tId).future),
-          throwsA(isA<Exception>()),
-        );
+        // Allow the stream error and retry cycle to begin
+        await Future.microtask(() {});
 
+        // Assert: Riverpod 3.x StreamNotifier auto-retries indefinitely on stream
+        // errors. The observable state is AsyncLoading (retrying), not AsyncError.
         final state = container.read(todoDetailProvider(_tId));
-        expect(state.hasError, isTrue);
-        expect(state.error, isA<Exception>());
+        expect(state.isLoading, isTrue);
       },
     );
 
     test(
-      'state becomes AsyncError when stream throws an error after first data emission',
+      'retries with previous data preserved when stream throws an error after first emission',
       () async {
         // Arrange
         final controller = StreamController<Todo?>();
@@ -324,6 +367,7 @@ void main() {
         ).thenAnswer((_) => controller.stream);
 
         container = _makeContainer(mockRepo);
+        container.listen(todoDetailProvider(_tId), (_, _) {});
 
         // Emit success, provider has AsyncData state
         controller.add(_tTodo);
@@ -333,9 +377,11 @@ void main() {
         controller.addError(Exception('Database failure while listening'));
         await Future.microtask(() {});
 
-        // Assert
+        // Assert: Riverpod 3.x StreamNotifier enters a retrying AsyncLoading state
+        // preserving the last-known data. It does NOT immediately surface AsyncError.
         final state = container.read(todoDetailProvider(_tId));
-        expect(state, isA<AsyncError>());
+        expect(state.isLoading, isTrue);
+        expect(state.value, _tTodo); // previous data preserved during retry
 
         await controller.close();
       },
@@ -347,6 +393,7 @@ void main() {
       when(() => mockRepo.watchById(_tId)).thenAnswer((_) => controller.stream);
 
       container = _makeContainer(mockRepo);
+      container.listen(todoDetailProvider(_tId), (_, _) {});
 
       controller.add(_tTodo);
       await container.read(todoDetailProvider(_tId).future);
