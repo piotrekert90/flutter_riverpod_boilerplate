@@ -37,19 +37,18 @@ void main() {
       ),
     );
 
+    await tester.tap(find.byType(FloatingActionButton));
     await tester.pumpAndSettle();
 
-    expect(find.text('Brak zadań'), findsOneWidget);
+    expect(find.text('New Task'), findsOneWidget);
 
-    await tester.tap(find.text('Dodaj'));
+    await tester.enterText(find.byType(TextFormField), 'Finish boilerplate');
+
+    await tester.tap(find.widgetWithText(FilledButton, 'Add'));
     await tester.pumpAndSettle();
 
-    await tester.enterText(find.byType(TextFormField), 'Kup mleko');
-    await tester.tap(find.widgetWithText(FilledButton, 'Dodaj'));
-    await tester.pumpAndSettle();
-
-    expect(find.text('Kup mleko'), findsOneWidget);
-    expect(find.text('Brak zadań'), findsNothing);
+    expect(find.text('Finish boilerplate'), findsOneWidget);
+    expect(find.text('New Task'), findsNothing);
   });
 
   testWidgets('Navigates to TodoDetailScreen when a task is tapped', (

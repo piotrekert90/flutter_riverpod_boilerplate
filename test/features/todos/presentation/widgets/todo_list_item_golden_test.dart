@@ -11,7 +11,7 @@ import 'package:flutter_riverpod_boilerplate/features/todos/presentation/widgets
 void main() {
   final frozenDate = DateTime(2025, 1, 1, 10, 0);
 
-  group('TodoListItem Golden Tests', () {
+  group('TodoListItem Golden Tesfluttets', () {
     testWidgets('Active state', (tester) async {
       tester.view.physicalSize = const Size(500, 100);
       tester.view.devicePixelRatio = 3.0;

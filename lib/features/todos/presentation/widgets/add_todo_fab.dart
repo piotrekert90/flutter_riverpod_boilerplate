@@ -24,7 +24,7 @@ class AddTodoFab extends StatelessWidget {
     return FloatingActionButton.extended(
       onPressed: () => _showAddDialog(context),
       icon: const Icon(Icons.add),
-      label: const Text('Dodaj'),
+      label: const Text('Add'),
     );
   }
 }
@@ -55,19 +55,19 @@ class _AddTodoDialogState extends State<_AddTodoDialog> {
   @override
   Widget build(BuildContext context) {
     return AlertDialog(
-      title: const Text('Nowe zadanie'),
+      title: const Text('New Task'),
       content: Form(
         key: _formKey,
         child: TextFormField(
           controller: _controller,
           autofocus: true,
           decoration: const InputDecoration(
-            labelText: 'Tytuł',
-            hintText: 'Np. Kup mleko',
+            labelText: 'Title',
+            hintText: 'E.g. Buy milk',
           ),
           validator: (value) {
             if (value == null || value.trim().isEmpty) {
-              return 'Podaj tytuł zadania';
+              return 'Title cannot be empty';
             }
             return null;
           },
@@ -77,9 +77,9 @@ class _AddTodoDialogState extends State<_AddTodoDialog> {
       actions: [
         TextButton(
           onPressed: () => Navigator.of(context).pop(),
-          child: const Text('Anuluj'),
+          child: const Text('Cancel'),
         ),
-        FilledButton(onPressed: _submit, child: const Text('Dodaj')),
+        FilledButton(onPressed: _submit, child: const Text('Add')),
       ],
     );
   }
