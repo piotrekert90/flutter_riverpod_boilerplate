@@ -17,10 +17,10 @@ class TodoScreen extends ConsumerWidget {
 
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Zadania'),
+        title: const Text('Todos'),
         actions: [
           IconButton(
-            tooltip: 'Ustawienia',
+            tooltip: 'Settings',
             icon: const Icon(Icons.settings_outlined),
             onPressed: () {
               Navigator.of(context).push(
@@ -39,7 +39,7 @@ class TodoScreen extends ConsumerWidget {
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
                 Text(
-                  'Nie udało się załadować zadań',
+                  'Failed to load tasks',
                   style: Theme.of(context).textTheme.titleMedium,
                   textAlign: TextAlign.center,
                 ),
@@ -52,7 +52,7 @@ class TodoScreen extends ConsumerWidget {
                 const SizedBox(height: 16),
                 FilledButton(
                   onPressed: () => ref.invalidate(todoListProvider),
-                  child: const Text('Spróbuj ponownie'),
+                  child: const Text('Try again'),
                 ),
               ],
             ),
@@ -71,12 +71,12 @@ class TodoScreen extends ConsumerWidget {
                   ),
                   const SizedBox(height: 16),
                   Text(
-                    'Brak zadań',
+                    'No tasks found',
                     style: Theme.of(context).textTheme.titleMedium,
                   ),
                   const SizedBox(height: 8),
                   Text(
-                    'Dodaj pierwsze zadanie przyciskiem poniżej',
+                    'Add your first task using the button below',
                     style: Theme.of(context).textTheme.bodyMedium?.copyWith(
                       color: Theme.of(context).colorScheme.onSurfaceVariant,
                     ),
