@@ -6,7 +6,6 @@ import 'features/settings/presentation/providers/user_preferences_notifier.dart'
 import 'features/todos/presentation/screens/todo_screen.dart';
 
 /// Root widget that applies theme preferences and hosts the home screen.
-/// Main application widget that sets up theming and routing.
 class App extends ConsumerWidget {
   /// Creates an [App].
   const App({super.key});
