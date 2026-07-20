@@ -1,19 +1,90 @@
-#!/bin/bash
+#!/usr/bin/env bash
 
-# Exit immediately if any command exits with a non-zero status
-set -e
+# ==============================================================================
+# Script Name: before_push.sh
+# Description: Comprehensive static verification and test execution pipeline.
+# Guidance: Run this script prior to freezing code or pushing to remote branches.
+# ==============================================================================
 
-echo "🧹 [1/4] Cleaning workspace and fetching dependencies..."
-flutter clean > /dev/null
-flutter pub get > /dev/null
+# Exit immediately if a command exits with a non-zero status,
+# treat unset variables as an error, and catch failures in pipelines.
+set -euo pipefail
 
-echo "⚙️ [2/4] Running build_runner for code generation..."
-dart run build_runner build --delete-conflicting-outputs > /dev/null
+# Define ANSI color codes for rich console formatting
+GREEN='\033[0;32m'
+RED='\033[0;31m'
+YELLOW='\033[0;33m'
+BLUE='\033[0;34m'
+NC='\033[0m' # No Color
 
-echo "🔍 [3/4] Running static code analysis..."
+# Track script execution time
+START_TIME=$(date +%s)
+
+log_info() {
+    echo -e "${BLUE}🚀 [INFO]${NC} $1"
+}
+
+log_step() {
+    echo -e "\n${YELLOW}⚙️  [STEP $1]${NC} $2"
+}
+
+log_success() {
+    echo -e "${GREEN}✅ [SUCCESS]${NC} $1"
+}
+
+log_error() {
+    echo -e "${RED}❌ [ERROR]${NC} $1"
+}
+
+# Trap unexpected errors to display a clean failure message
+error_handler() {
+    log_error "Verification pipeline failed at the last executed command."
+    exit 1
+}
+trap error_handler ERR
+
+log_info "Launching comprehensive pre-push verification pipeline..."
+
+# ------------------------------------------------------------------------------
+log_step "1" "Cleaning environment and fetching dependencies..."
+# ------------------------------------------------------------------------------
+flutter clean
+flutter pub get
+
+# ------------------------------------------------------------------------------
+log_step "2" "Regenerating code declarations (Build Runner)..."
+# ------------------------------------------------------------------------------
+# Deletes conflicting outputs automatically to prevent compilation deadlocks
+dart run build_runner build --delete-conflicting-outputs
+
+# ------------------------------------------------------------------------------
+log_step "3" "Verifying code formatting standards..."
+# ------------------------------------------------------------------------------
+# Ensures the code strictly obeys Dart formatting guidelines without altering files
+dart format --output=none --set-exit-if-changed .
+log_success "Codebase formatting aligns with style specifications."
+
+# ------------------------------------------------------------------------------
+log_step "4" "Executing static analysis (Linter)..."
+# ------------------------------------------------------------------------------
+# Evaluates project architecture against analysis_options.yaml rules
 flutter analyze
+log_success "Static analysis passed with zero warnings or errors."
 
-echo "🧪 [4/4] Executing unit and golden tests..."
+# ------------------------------------------------------------------------------
+log_step "5" "Running complete unit and widget test suites..."
+# ------------------------------------------------------------------------------
+# Executes all automated tests inside the /test directory
 flutter test
+log_success "All automated unit and widget tests completed successfully."
 
-echo "✅ [SUCCESS] Codebase is in perfect shape. Safe to push!"
+# ==============================================================================
+# Pipeline Completion
+# ==============================================================================
+END_TIME=$(date +%s)
+ELAPSED_DURATION=$((END_TIME - START_TIME))
+
+echo -e "\n=============================================================================="
+log_success "All verification phases passed successfully! Codebase is ready for push."
+log_info "Total execution duration: ${ELAPSED_DURATION} seconds."
+echo -e "=============================================================================="
