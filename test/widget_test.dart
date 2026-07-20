@@ -76,7 +76,7 @@ void main() {
 
     // Verify that we are on the details screen
     expect(find.byType(TodoDetailScreen), findsOneWidget);
-    expect(find.text('Szczegóły zadania'), findsOneWidget);
+    expect(find.text('Task Details'), findsOneWidget);
     expect(find.text('Status'), findsOneWidget);
 
     // Simulate tapping the back button

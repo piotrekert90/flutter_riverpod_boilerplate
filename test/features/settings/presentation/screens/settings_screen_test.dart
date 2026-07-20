@@ -33,12 +33,12 @@ void main() {
 
     await tester.pumpAndSettle();
 
-    expect(find.text('Systemowy'), findsOneWidget);
-    expect(find.text('Jasny'), findsOneWidget);
-    expect(find.text('Ciemny'), findsOneWidget);
-    expect(find.text('Powiadomienia'), findsOneWidget);
+    expect(find.text('System'), findsOneWidget);
+    expect(find.text('Light'), findsOneWidget);
+    expect(find.text('Dark'), findsOneWidget);
+    expect(find.text('Notifications'), findsOneWidget);
 
-    await tester.tap(find.text('Ciemny'));
+    await tester.tap(find.text('Dark'));
     await tester.pumpAndSettle();
 
     expect((await repository.get()).themeMode, UserThemeMode.dark);

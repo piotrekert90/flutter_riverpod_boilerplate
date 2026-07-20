@@ -68,8 +68,8 @@ void main() {
       tester.view.devicePixelRatio = 3.0;
 
       // Add deterministic tasks using the frozen clock
-      await repository.add(title: 'Napisz dokumentację');
-      await repository.add(title: 'Przetestuj aplikację');
+      await repository.add(title: 'Write documentation');
+      await repository.add(title: 'Test the application');
 
       await tester.pumpWidget(
         ProviderScope(

@@ -14,7 +14,7 @@ class SettingsScreen extends ConsumerWidget {
     final preferencesAsync = ref.watch(userPreferencesProvider);
 
     return Scaffold(
-      appBar: AppBar(title: const Text('Ustawienia')),
+      appBar: AppBar(title: const Text('Settings')),
       body: preferencesAsync.when(
         loading: () => const Center(child: CircularProgressIndicator()),
         error: (error, _) => Center(
@@ -24,7 +24,7 @@ class SettingsScreen extends ConsumerWidget {
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
                 Text(
-                  'Nie udało się załadować ustawień',
+                  'Failed to load settings',
                   style: Theme.of(context).textTheme.titleMedium,
                   textAlign: TextAlign.center,
                 ),
@@ -37,7 +37,7 @@ class SettingsScreen extends ConsumerWidget {
                 const SizedBox(height: 16),
                 FilledButton(
                   onPressed: () => ref.invalidate(userPreferencesProvider),
-                  child: const Text('Spróbuj ponownie'),
+                  child: const Text('Try again'),
                 ),
               ],
             ),
@@ -51,17 +51,17 @@ class SettingsScreen extends ConsumerWidget {
                 ButtonSegment<UserThemeMode>(
                   value: UserThemeMode.system,
                   icon: Icon(Icons.brightness_auto_outlined),
-                  label: Text('Systemowy'),
+                  label: Text('System'),
                 ),
                 ButtonSegment<UserThemeMode>(
                   value: UserThemeMode.light,
                   icon: Icon(Icons.light_mode_outlined),
-                  label: Text('Jasny'),
+                  label: Text('Light'),
                 ),
                 ButtonSegment<UserThemeMode>(
                   value: UserThemeMode.dark,
                   icon: Icon(Icons.dark_mode_outlined),
-                  label: Text('Ciemny'),
+                  label: Text('Dark'),
                 ),
               ],
               selected: {preferences.themeMode},
@@ -70,7 +70,7 @@ class SettingsScreen extends ConsumerWidget {
             ),
             const Divider(height: 24),
             SwitchListTile(
-              title: const Text('Powiadomienia'),
+              title: const Text('Notifications'),
               secondary: const Icon(Icons.notifications_outlined),
               value: preferences.isNotificationsEnabled,
               onChanged: (value) async {

@@ -17,7 +17,7 @@ class TodoDetailScreen extends ConsumerWidget {
     final todoAsync = ref.watch(todoDetailProvider(todoId));
 
     return Scaffold(
-      appBar: AppBar(title: const Text('Szczegóły zadania')),
+      appBar: AppBar(title: const Text('Task Details')),
       body: todoAsync.when(
         loading: () => const Center(child: CircularProgressIndicator()),
         error: (error, _) => Center(
@@ -27,7 +27,7 @@ class TodoDetailScreen extends ConsumerWidget {
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
                 Text(
-                  'Wystąpił błąd',
+                  'An error occurred',
                   style: Theme.of(context).textTheme.titleMedium,
                   textAlign: TextAlign.center,
                 ),
@@ -40,7 +40,7 @@ class TodoDetailScreen extends ConsumerWidget {
                 const SizedBox(height: 16),
                 FilledButton(
                   onPressed: () => ref.invalidate(todoDetailProvider(todoId)),
-                  child: const Text('Spróbuj ponownie'),
+                  child: const Text('Try again'),
                 ),
               ],
             ),
@@ -50,7 +50,7 @@ class TodoDetailScreen extends ConsumerWidget {
           if (todo == null) {
             return Center(
               child: Text(
-                'Zadanie nie istnieje.',
+                'Task not found.',
                 style: Theme.of(context).textTheme.titleMedium,
               ),
             );
@@ -75,13 +75,13 @@ class TodoDetailScreen extends ConsumerWidget {
                     : Icons.radio_button_unchecked,
                 iconColor: todo.isCompleted ? Colors.green : Colors.grey,
                 label: 'Status',
-                value: todo.isCompleted ? 'Zakończone' : 'W toku',
+                value: todo.isCompleted ? 'Completed' : 'In progress',
               ),
               const Divider(height: 32),
               _buildDetailRow(
                 context,
                 icon: Icons.calendar_today,
-                label: 'Data utworzenia',
+                label: 'Created at',
                 value: dateFormat.format(todo.createdAt),
               ),
             ],
