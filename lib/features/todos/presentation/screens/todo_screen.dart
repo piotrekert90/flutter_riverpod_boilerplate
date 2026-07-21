@@ -46,7 +46,7 @@ class TodoScreen extends ConsumerWidget {
                 ),
                 const SizedBox(height: 8),
                 Text(
-                  error is Failure ? error.message : error.toString(),
+                  error is Failure ? error.userMessage : error.toString(),
                   style: Theme.of(context).textTheme.bodySmall,
                   textAlign: TextAlign.center,
                 ),
@@ -103,7 +103,7 @@ class TodoScreen extends ConsumerWidget {
                     ScaffoldMessenger.of(context).showSnackBar(
                       SnackBar(
                         content: Text(
-                          failure?.message ?? 'Failed to toggle task',
+                          failure?.userMessage ?? 'Failed to toggle task',
                         ),
                       ),
                     );
@@ -113,15 +113,40 @@ class TodoScreen extends ConsumerWidget {
                   final (success, failure) = await ref
                       .read(todoListProvider.notifier)
                       .deleteTodo(todo.id);
-                  if (!success && context.mounted) {
+                  if (!context.mounted) return;
+                  if (!success) {
                     ScaffoldMessenger.of(context).showSnackBar(
                       SnackBar(
                         content: Text(
-                          failure?.message ?? 'Failed to delete task',
+                          failure?.userMessage ?? 'Failed to delete task',
                         ),
                       ),
                     );
+                    return;
                   }
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(
+                      content: Text('Deleted "${todo.title}"'),
+                      action: SnackBarAction(
+                        label: 'Undo',
+                        onPressed: () async {
+                          final (restored, restoreFailure) = await ref
+                              .read(todoListProvider.notifier)
+                              .restoreTodo(todo);
+                          if (!restored && context.mounted) {
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              SnackBar(
+                                content: Text(
+                                  restoreFailure?.userMessage ??
+                                      'Failed to restore task',
+                                ),
+                              ),
+                            );
+                          }
+                        },
+                      ),
+                    ),
+                  );
                 },
               );
             },
@@ -135,7 +160,9 @@ class TodoScreen extends ConsumerWidget {
               .addTodo(title);
           if (!success && context.mounted) {
             ScaffoldMessenger.of(context).showSnackBar(
-              SnackBar(content: Text(failure?.message ?? 'Failed to add task')),
+              SnackBar(
+                content: Text(failure?.userMessage ?? 'Failed to add task'),
+              ),
             );
           }
         },

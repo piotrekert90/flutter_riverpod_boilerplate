@@ -35,4 +35,9 @@ class TodoList extends _$TodoList {
   Future<(bool success, Failure? failure)> deleteTodo(int id) async {
     return await ref.read(todoRepositoryProvider).delete(id: id);
   }
+
+  /// Restores a previously deleted todo item, used to implement "Undo".
+  Future<(bool success, Failure? failure)> restoreTodo(Todo todo) async {
+    return await ref.read(todoRepositoryProvider).restore(todo);
+  }
 }

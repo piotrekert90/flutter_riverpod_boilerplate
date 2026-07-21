@@ -94,4 +94,11 @@ class FakeTodoRepository implements TodoRepository {
     _emit();
     return (true, null);
   }
+
+  @override
+  Future<(bool success, Failure? failure)> restore(Todo todo) async {
+    _todos.insert(0, todo);
+    _emit();
+    return (true, null);
+  }
 }

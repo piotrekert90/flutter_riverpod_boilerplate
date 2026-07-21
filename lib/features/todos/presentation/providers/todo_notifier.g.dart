@@ -36,7 +36,7 @@ final class TodoListProvider
   TodoList create() => TodoList();
 }
 
-String _$todoListHash() => r'5c41c164eb731bafa8452cc57cf9c87e4444a1ef';
+String _$todoListHash() => r'1bbd603088278555f2edd4b6cc7b7310762e29a2';
 
 /// Notifier for managing the list of todo items.
 

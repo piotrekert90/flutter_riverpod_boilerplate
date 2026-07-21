@@ -304,6 +304,53 @@ void main() {
     );
   });
 
+  group('TodoList Notifier - restoreTodo()', () {
+    setUp(() {
+      when(() => mockRepo.watchAll()).thenAnswer((_) => Stream.value(_tTodos));
+    });
+
+    test('calls repository.restore with the given todo', () async {
+      final restoredTodo = _tTodos.first;
+      when(
+        () => mockRepo.restore(restoredTodo),
+      ).thenAnswer((_) async => (true, null));
+      container = _makeContainer(mockRepo);
+      container.listen(todoListProvider, (_, _) {});
+      await container.read(todoListProvider.future);
+
+      final (success, failure) = await container
+          .read(todoListProvider.notifier)
+          .restoreTodo(restoredTodo);
+
+      expect(success, isTrue);
+      expect(failure, isNull);
+      verify(() => mockRepo.restore(restoredTodo)).called(1);
+    });
+
+    test(
+      'returns error record when repository.restore fails and state remains AsyncData',
+      () async {
+        final restoredTodo = _tTodos.first;
+        when(
+          () => mockRepo.restore(restoredTodo),
+        ).thenAnswer((_) async => (false, DatabaseFailure('Database error')));
+
+        container = _makeContainer(mockRepo);
+        container.listen(todoListProvider, (_, _) {});
+        await container.read(todoListProvider.future);
+
+        final (success, failure) = await container
+            .read(todoListProvider.notifier)
+            .restoreTodo(restoredTodo);
+
+        expect(success, isFalse);
+        expect(failure, isA<DatabaseFailure>());
+        expect(failure?.message, 'Database error');
+        expect(container.read(todoListProvider), isA<AsyncData<List<Todo>>>());
+      },
+    );
+  });
+
   group('TodoList Notifier - Memory management', () {
     test('cancels stream subscription when container is disposed', () async {
       final controller = StreamController<List<Todo>>();
